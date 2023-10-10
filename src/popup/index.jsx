@@ -1,11 +1,9 @@
+import {RouterProvider} from 'react-router-dom'
+import routers from '@/router/router.jsx';
+
 
 function Entry(){
-    return(
-        <div className="home-warpper">
-            我是popupd页岩 
-        </div>
-    )
+    return <RouterProvider router={routers} ></RouterProvider>
 }
-
 
 export default Entry
