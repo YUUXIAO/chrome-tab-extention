@@ -3,14 +3,11 @@
   "name": "tab_manage_extension",
   "version": "1.0",
   "manifest_version": 3,
-  "backgorund": {
-    "service_work": "static/js/background.js"
-  },
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "css": ["static/css/content.css"],
-      "js": ["static/js/content.js"],
+      "css": ["content.css"],
+      "js": ["content.js"],
       "run_at": "document_end"
     }
   ],
@@ -33,25 +30,10 @@
     },
     "default_title": "窗口管理器"
   },
-  "icons": [
-    {
-      "src": "logo.png",
-      "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/x-icon"
-    },
-    {
-      "src": "logo.png",
-      "type": "image/png",
-      "sizes": "192x192"
-    },
-    {
-      "src": "logo.png",
-      "type": "image/png",
-      "sizes": "512x512"
-    }
-  ],
-  "start_url": ".",
-  "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "icons": {
+    "16": "logo.png",
+    "32": "logo.png",
+    "48": "logo.png",
+    "128": "logo.png"
+  }
 }

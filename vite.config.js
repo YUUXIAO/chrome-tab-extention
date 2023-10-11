@@ -3,18 +3,20 @@ import path from "path"
 import react from "@vitejs/plugin-react"
 import reactRefresh from "@vitejs/plugin-react-refresh"
 import AutoImport from "unplugin-auto-import/vite"
-import { createStyleImportPlugin, AntdResolve } from "vite-plugin-style-import"
+// TODO 报错了，先注释
+// import { createStyleImportPlugin, AntdResolve } from "vite-plugin-style-import"
 
 export default defineConfig({
+  build: {},
   plugins: [
     react(),
     reactRefresh(), // 热更新
     AutoImport({
       include: [/\.[tj]sx?$/],
       imports: ["react", "react-router"]
-    }),
+    })
     // Antd 的样式使用了 Less 作为开发语言，为了减小 antd 的 css，变全局引入为按需引入
-    createStyleImportPlugin({ resolve: [AntdResolve] })
+    // createStyleImportPlugin({ resolve: [AntdResolve] })
   ],
   css: {
     // CSS 预处理器的配置选项

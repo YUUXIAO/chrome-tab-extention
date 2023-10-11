@@ -1,11 +1,11 @@
-import { createBrowserRouter } from "react-router-dom"
+import { createHashRouter } from 'react-router-dom'
 import PopupHome from "@/popup/pages/Home"
 // TODO 动态导入
 
-const routerConfigs = createBrowserRouter([
+const routerConfigs = createHashRouter  ([
   {
     path: "/",
-    element: "空白"
+    element:<PopupHome />
   },
   {
     path: "/home",
