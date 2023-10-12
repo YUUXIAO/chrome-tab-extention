@@ -24,7 +24,7 @@ export default defineConfig({
       less: {
         additionalData: `@import "${path.resolve(
           __dirname,
-          "src/assests/var.less"
+          "src/assests/index.less"
         )}";` // 全局变量
       }
     }
