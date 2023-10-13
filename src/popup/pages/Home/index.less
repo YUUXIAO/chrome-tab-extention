@@ -1,11 +1,26 @@
 .home-wrapper {
     width: 600px;
+    user-select: none;
+}
+
+.list-wrapper {
+    border: 1px solid #eee;
+    padding: 20px 10px;
+    border-radius: 20px;
+}
+
+.search-wrapper {
+    margin-bottom: 8px;
 }
 
 .tab-one {
     font-size: 13px;
     height: 40px;
     border-bottom: 1px dashed @color-main;
+
+    &:last-child {
+        border-bottom: 0;
+    }
 
     .title {
         color: @color-text;

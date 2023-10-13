@@ -2,7 +2,7 @@
 export const mockWindowsData = [
   {
     alwaysOnTop: false,
-    focused: false,
+    focused: true,
     height: 632,
     id: 973095260,
     incognito: false,

@@ -1,10 +1,10 @@
 import './index.less'
-import {Tabs,List } from 'antd'
+import {Tabs,Input,Switch  } from 'antd'
 import React from 'react'
 import {DeleteOutlined} from '@ant-design/icons'
 import {mockWindowsData,mockTabsData} from '@/api/popup.js'
 import ChromeUtils from '@/apiUtils.js'
-
+const { Search } = Input;
 // TODO 抽出一个类的实现
 // TODO build 切换api；为mock数据
 
@@ -24,12 +24,15 @@ class Home extends React.Component{
         let {windowTabs,currentWindowTab} = this.state
         console.error('targetKey', targetKey, action)
         if(action === 'remove'){
-            windowTabs = windowTabs.filter(i=>i.windowId === targetKey)
-            this.setState({
-                windowTabs,
-                currentWindowTab:windowTabs[0],
-                activeKey: windowTabs[0].windowId
-            })
+            // 删除窗口所有tab
+            const tabIds = currentWindowTab.map(i=>i.id)
+            ChromeUtils.deleteTab(tabIds)
+            // windowTabs = windowTabs.filter(i=>i.windowId === targetKey)
+            // this.setState({
+            //     windowTabs,
+            //     currentWindowTab:windowTabs[0],
+            //     activeKey: windowTabs[0].windowId
+            // })
         } else {
            // TODO 新增
         }
@@ -41,7 +44,8 @@ class Home extends React.Component{
         const windowOne = windowTabs.find(i=>i.windowId === winId)?.tabs ||[]
         console.error('windowTabs',windowTabs)
         this.setState({
-            currentWindowTab: windowOne
+            currentWindowTab: windowOne,
+            activeTab: winId
         })
         console.error(windowOne)
     }
@@ -55,29 +59,62 @@ class Home extends React.Component{
         // TODO mock
         ChromeUtils.toggleTab(tab)
     }
+    // 删除单个tab
+    onTabDelete = (tab)=>{
+ChromeUtils.deleteTab(tab.id)
+    }
+    // 搜索当前窗口
+
+    onSearch = (keyword)=>{
+        
+        let result = []
+        const {windowTabs,activeTab} = this.state
+        console.error('搜索当前窗口',keyword,activeTab)
+        console.error('allTabs', windowTabs)
+        const allTabs = windowTabs.find(i=>{
+            return i.windowId=== activeTab
+        })?.tabs || []
+        if(keyword) {
+            result = allTabs.filter(i=>{
+                return i.title.includes(keyword)
+            })
+        } else {
+            console.error(windowTabs)
+            console.error(activeTab)
+            result =allTabs || []
+
+        }
+        
+        this.setState({
+            currentWindowTab:result
+        })
+    }
+    // 切换 switch
+    onSwitchChange = (val)=>{}
     // 获取所有tabs
     async getAllWindows (){
         // TODO mock
-        const windows = await ChromeUtils.getAllWindow()
-        const allTabs = await ChromeUtils.getTabLists()
-        // const windows = mockW
-        
+        // const windows = await ChromeUtils.getAllWindow()
+        // const allTabs = await ChromeUtils.getTabLists()
+        const windows = mockWindowsData
+        const allTabs = mockTabsData
         const windowMap = {}
         const windowTabs = []
+        let currentTabs = []
         windows.forEach((win,winIdx) => {
             const parentId = win.id
-            const tabs = allTabs.filter(i=> i.windowId === parentId)
+            currentTabs = allTabs.filter(i=> i.windowId === parentId)
             // TODO 无痕模式
             const windowInfo = {
                 isCurrent: win.focused,
                 name: `窗口-${winIdx}`,
                 windowId: parentId,
-                tabs
+                tabs:currentTabs
             }
+            console.error('窗口', win)
             if(win.focused){
                 this.setState({
                     activeTab: parentId,
-                    currentWindowTab: tabs
                 })
             }
             // TODO 删除map
@@ -86,7 +123,8 @@ class Home extends React.Component{
 
         });
         this.setState({
-            windowTabs: windowTabs
+            windowTabs: windowTabs,
+            currentWindowTab:currentTabs
         })
        console.error('windowTabs',windowTabs)
     }
@@ -94,25 +132,41 @@ class Home extends React.Component{
         const {windowTabs,activeTab,currentWindowTab} = this.state
         return (
             <div className='home-wrapper'>
-                <Tabs type="editable-card" onEdit={this.onEdit} closable defaultActiveKey={windowTabs[0]?.windowId} activeKey={activeTab} items={windowTabs?.map((i)=>{
+                {/* 搜索当前窗口 */}
+                <div className="search-wrapper flex-x-start flex-y-center">
+                <Search
+      placeholder="请输入Tab名称"
+      allowClear
+      enterButton="搜索"
+      size="large"
+      onSearch={this.onSearch}
+    />
+    <Switch checkedChildren='全局' onChange={this.onSwitchChange} />
+                </div>
+                {/* 窗口Tabs */}
+                <Tabs type="editable-card" onEdit={this.onEdit} defaultActiveKey={windowTabs[0]?.windowId} activeKey={activeTab} items={windowTabs?.map((i)=>{
                     return {label: i.name, key: i.windowId}
                 })} onChange={this.onChange} >
                 </Tabs>
+                {/* 列表 */}
+                <div className='list-wrapper'>
                 {currentWindowTab.map((tab,tabIdx)=>{
                     return (
                         <div className="tab-one flex-y-center flex-x-between" onClick={(e)=>this.tabClick(e,tab)} key={tabIdx}>
                             <div className='title app-oneline'>{tab.title}</div>
                             <div className='action flex-x-end'>
-                            <DeleteOutlined  twoToneColor="#eb2f96"/>
+                            <DeleteOutlined  twoToneColor="#eb2f96" onClick={this.onTabDelete(tab)}/>
                             </div>
                         </div>
                     )
                 })}
+                </div>
             </div>
         )
     }
     componentDidMount(){
         this.getAllWindows()
+
     }
 }
 
