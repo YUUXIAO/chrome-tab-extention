@@ -2,6 +2,11 @@
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
+## TODO LIST
+
+1、当前窗口新建空白 tab,显示所有该窗口的 tablist
+2、快捷键处理 tab
+
 ## Available Scripts
 
 In the project directory, you can run:

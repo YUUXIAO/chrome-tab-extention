@@ -3,6 +3,7 @@ import {Tabs,List } from 'antd'
 import React from 'react'
 import {DeleteOutlined} from '@ant-design/icons'
 import {mockWindowsData,mockTabsData} from '@/api/popup.js'
+import ChromeUtils from '@/apiUtils.js'
 
 // TODO 抽出一个类的实现
 // TODO build 切换api；为mock数据
@@ -44,15 +45,21 @@ class Home extends React.Component{
         })
         console.error(windowOne)
     }
-    tabClick = async (tab)=>{
-        console.error('tabClick', tab)
-        await chrome.tabs.move(tab.id, {index: 0});
+    // 切换tab
+    tabClick =  (e,tab)=>{
+        console.error('tabClick',e, tab)
+        e.stopPropagation()
+       
+        // chrome.windows.update(tab.windowId, { focused: true });
+        // chrome.tabs.highlight({ tabs: tab.index, windowId: tab.windowId });
+        // TODO mock
+        ChromeUtils.toggleTab(tab)
     }
     // 获取所有tabs
     async getAllWindows (){
         // TODO mock
-        const windows = await chrome.windows.getAll({})
-        const allTabs = await chrome.tabs.query({})
+        const windows = await ChromeUtils.getAllWindow()
+        const allTabs = await ChromeUtils.getTabLists()
         // const windows = mockW
         
         const windowMap = {}
@@ -93,7 +100,7 @@ class Home extends React.Component{
                 </Tabs>
                 {currentWindowTab.map((tab,tabIdx)=>{
                     return (
-                        <div className="tab-one flex-y-center flex-x-between" onClick={this.tabClick(tab)} key={tabIdx}>
+                        <div className="tab-one flex-y-center flex-x-between" onClick={(e)=>this.tabClick(e,tab)} key={tabIdx}>
                             <div className='title app-oneline'>{tab.title}</div>
                             <div className='action flex-x-end'>
                             <DeleteOutlined  twoToneColor="#eb2f96"/>
