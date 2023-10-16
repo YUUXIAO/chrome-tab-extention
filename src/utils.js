@@ -11,15 +11,39 @@ export const extractDomain = (url) => {
 export const convertTabsData = (allTabs) => {
   console.error("当前窗口tab按照域名排序", allTabs)
   if (!allTabs?.length) return []
-  // 分组归类
-  const targetObj = Object.create(null)
+  // 按照域名分组归类
+  const domainSortData = Object.create(null)
   allTabs.forEach((tab) => {
     const domain = extractDomain(tab.url)
-    if (!targetObj[domain]) {
-      targetObj[domain] = [tab]
+    if (!domainSortData[domain]) {
+      domainSortData[domain] = {
+        tabs: [tab]
+      }
     } else {
-      targetObj[domain].push(tab)
+      domainSortData[domain].tabs.push(tab)
     }
   })
-  console.error("targetObj", targetObj)
+  console.error("targetObj", domainSortData)
+  return domainSortData
+}
+
+// 更新域名下的tab,return 当前tab 所有的信息
+export const updateDomainData = (
+  tab,
+  domain,
+  domainData,
+  currentWindowData
+) => {
+  const { tabs } = domainData
+
+  const hasOtherTab = tabs.filter((i) => i.id !== tab.id)
+  if (hasOtherTab.length) {
+    currentWindowData[domain] = {
+      ...domainData,
+      tabs: hasOtherTab
+    }
+  } else {
+    Reflect.deleteProperty(currentWindowData, `${domain}`)
+  }
+  return currentWindowData
 }

@@ -4,7 +4,7 @@ import React from "react"
 import { DeleteOutlined } from "@ant-design/icons"
 import { mockWindowsData, mockTabsData } from "@/api/popup.js"
 import ChromeUtils from "@/apiUtils.js"
-import { extractDomain, convertTabsData } from "@/utils"
+import { extractDomain, updateDomainData, convertTabsData } from "@/utils"
 
 const { Search } = Input
 // TODO 抽出一个类的实现
@@ -21,20 +21,21 @@ class Home extends React.Component {
     }
   }
   // 关闭窗口
-
   onEdit = (targetKey, action) => {
     let { windowTabs, currentWindowTab } = this.state
     console.error("targetKey", targetKey, action)
     if (action === "remove") {
       // 删除窗口所有tab
-      const tabIds = currentWindowTab.map((i) => i.id)
+      // const tabIds = currentWindowTab.tabs.map((i) => i.id)
+      // ChromeUtils.deleteTab(tabIds)
+      const targetWindow = windowTabs.find((i) => i.windowId === targetKey)
+      const tabIds = targetWindow.map((i) => i.id)
       ChromeUtils.deleteTab(tabIds)
-      // windowTabs = windowTabs.filter(i=>i.windowId === targetKey)
-      // this.setState({
-      //     windowTabs,
-      //     currentWindowTab:windowTabs[0],
-      //     activeKey: windowTabs[0].windowId
-      // })
+      this.setState({
+        windowTabs,
+        currentWindowTab: convertTabsData(windowTabs[0].tabs),
+        activeKey: windowTabs[0].windowId
+      })
     } else {
       // TODO 新增
     }
@@ -43,17 +44,14 @@ class Home extends React.Component {
     console.error("切换tab", winId)
 
     const { windowTabs } = this.state
-    const windowOne = windowTabs.find((i) => i.windowId === winId)?.tabs || []
+    const tabs = windowTabs.find((i) => i.windowId === winId)?.tabs || []
+    const windowSortList = convertTabsData(tabs) // 以域名排序的sort
     console.error("windowTabs", windowTabs)
     this.setState({
-      currentWindowTab: windowOne,
+      currentWindowTab: windowSortList,
       activeTab: winId
     })
-    convertTabsData(windowOne) // 域名转换
-    console.error(windowOne)
   }
-  // 获取域名
-
   // 切换tab
   tabClick = (e, tab) => {
     console.error("tabClick", e, tab)
@@ -65,8 +63,19 @@ class Home extends React.Component {
     ChromeUtils.toggleTab(tab)
   }
   // 删除单个tab
-  onTabDelete = (tab) => {
+  onTabDelete = (tab, domain, domainValues) => {
     ChromeUtils.deleteTab(tab.id)
+    // domainValues 如果该域名下的数据全部删除了要更新列表
+    // 更新域名下的数据
+    const updateWindowData = updateDomainData(
+      tab,
+      domain,
+      domainValues,
+      this.state.currentWindowTab
+    )
+    this.setState({
+      currentWindowTab: updateWindowData
+    })
   }
   // 搜索当前窗口
   onSearch = (keyword) => {
@@ -87,9 +96,17 @@ class Home extends React.Component {
       console.error(activeTab)
       result = allTabs || []
     }
-
+    const windowSortList = convertTabsData(result) // 以域名排序
     this.setState({
-      currentWindowTab: result
+      currentWindowTab: windowSortList
+    })
+  }
+  // tab 鼠标移入移出
+  handleMouse = (val, tab) => {
+    console.error("鼠标移入移出")
+    const id = val ? tab.id : null
+    this.setState({
+      mouseTabId: id
     })
   }
   // TODO 切换 switch
@@ -126,11 +143,12 @@ class Home extends React.Component {
       windowMap[parentId] = windowInfo
       windowTabs.push(windowInfo)
     })
+
+    const windowSortList = convertTabsData(currentTabs) // 以域名排序的sort
     this.setState({
       windowTabs: windowTabs,
-      currentWindowTab: currentTabs
+      currentWindowTab: windowSortList
     })
-    convertTabsData(currentTabs)
     console.error("windowTabs", windowTabs)
   }
   render() {
@@ -146,7 +164,8 @@ class Home extends React.Component {
             size="large"
             onSearch={this.onSearch}
           />
-          <Switch checkedChildren="全局" onChange={this.onSwitchChange} />
+          {/* 开放所有tab搜索 */}
+          <Switch onChange={this.onSwitchChange} />
         </div>
         {/* 窗口Tabs */}
         <Tabs
@@ -161,30 +180,51 @@ class Home extends React.Component {
         ></Tabs>
         {/* 列表 */}
         {/* <div className='list-wrapper'> */}
-        <Space direction="vertical">
-          {currentWindowTab.map((tab, tabIdx) => {
-            return (
-              // <div className="tab-one flex-y-center flex-x-between" onClick={(e)=>this.tabClick(e,tab)} key={tabIdx}>
-              //     <div className='title app-oneline'>{tab.title}</div>
-              //     <div className='action flex-x-end'>
-              //     <DeleteOutlined  twoToneColor="#eb2f96" onClick={this.onTabDelete(tab)}/>
-              //     </div>
-              // </div>
-
-              <Collapse
-                key={tab.id}
-                collapsible="header"
-                items={[
-                  {
-                    key: "1",
-                    label: tab.title,
-                    children: ""
-                  }
-                ]}
-              />
-            )
-          })}
-        </Space>
+        {/* <Space direction="vertical"> */}
+        {Object.entries(currentWindowTab).map(([domain, domainValues]) => {
+          return (
+            <Collapse
+              accordion
+              key={domain}
+              items={[
+                {
+                  key: domain,
+                  label: domain,
+                  children: domainValues.tabs.map((tab, tabIdx) => {
+                    return (
+                      <div
+                        key={tab.id}
+                        className="tab-one flex-y-center flex-x-between"
+                        onClick={this.tabClick}
+                      >
+                        {/* onMouseEnter={this.handleMouse(true, tab)}
+                        onMouseLeave={this.handleMouse(false, tab)} */}
+                        <div>
+                          <img
+                            alt={tab.url}
+                            className="icon"
+                            src={tab.favIconUrl || ""}
+                          ></img>
+                          {tab.title}
+                        </div>
+                        {this.state.mouseTabId === tab.id ? (
+                          <DeleteOutlined
+                            onClick={this.onTabDelete(
+                              tab,
+                              domain,
+                              domainValues
+                            )}
+                          />
+                        ) : null}
+                      </div>
+                    )
+                  })
+                }
+              ]}
+            />
+          )
+        })}
+        {/* </Space> */}
       </div>
       // </div>
     )
