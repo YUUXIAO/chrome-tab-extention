@@ -9,6 +9,19 @@ export const getTabLists = () => {
   })
 }
 
+// 创建新tab
+export const createNewTab = () => {
+  chrome.tabs.create({}, (tab) => {
+    console.error("创建新tab成功")
+  })
+}
+
+// 创建新窗口
+export const createNewWindow = () => {
+  chrome.windows.create({}, (window) => {
+    console.error("创建新窗口成功", window)
+  })
+}
 /**
  * 获取当前tab
  */

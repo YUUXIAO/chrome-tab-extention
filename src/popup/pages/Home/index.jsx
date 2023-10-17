@@ -6,6 +6,8 @@ import { mockWindowsData, mockTabsData } from "@/api/popup.js"
 import ChromeUtils from "@/apiUtils.js"
 import { extractDomain, updateDomainData, convertTabsData } from "@/utils"
 
+import CreateNewWindow from "../components/createNewWindow"
+
 const { Search } = Input
 // TODO 抽出一个类的实现
 // TODO build 切换api；为mock数据
@@ -13,7 +15,6 @@ const { Search } = Input
 class Home extends React.Component {
   constructor(props) {
     super(props)
-    console.error("sper")
     this.state = {
       activeTab: "1",
       windowTabs: [],
@@ -21,6 +22,7 @@ class Home extends React.Component {
     }
   }
   // 关闭窗口
+  // TODO 抽取刷新currentWindowTab、windowDomain、activeTab的方法
   onEdit = (targetKey, action) => {
     let { windowTabs, currentWindowTab } = this.state
     console.error("targetKey", targetKey, action)
@@ -37,7 +39,24 @@ class Home extends React.Component {
         activeKey: windowTabs[0].windowId
       })
     } else {
-      // TODO 新增
+      // TODO 新增窗口
+      console.error("新增窗口")
+      const targetWindow = windowTabs.find(
+        (i) => i.windowId === this.state.activeTab
+      )
+      console.error("targetWindow", targetWindow)
+      const newWindowData = {
+        name: `新增窗口-${windowTabs.length - 1}`,
+        tabs: [],
+        isCurrent: true,
+        windowId: `templId-${windowTabs.length}`
+      }
+      windowTabs.push(newWindowData)
+      this.setState({
+        windowTabs,
+        activeTab: `templId-${windowTabs.length - 1}`,
+        currentWindowTab: convertTabsData([])
+      })
     }
   }
   onChange = (winId) => {
@@ -150,6 +169,7 @@ class Home extends React.Component {
       currentWindowTab: windowSortList
     })
     console.error("windowTabs", windowTabs)
+    console.error("windowSortList", windowSortList)
   }
   render() {
     const { windowTabs, activeTab, currentWindowTab } = this.state
@@ -181,52 +201,65 @@ class Home extends React.Component {
         {/* 列表 */}
         {/* <div className='list-wrapper'> */}
         {/* <Space direction="vertical"> */}
-        {Object.entries(currentWindowTab).map(([domain, domainValues]) => {
-          return (
-            <Collapse
-              accordion
-              key={domain}
-              items={[
-                {
-                  key: domain,
-                  label: domain,
-                  children: domainValues.tabs.map((tab, tabIdx) => {
-                    return (
-                      <div
-                        key={tab.id}
-                        className="tab-one flex-y-center flex-x-between"
-                        onClick={this.tabClick}
-                      >
-                        {/* onMouseEnter={this.handleMouse(true, tab)}
-                        onMouseLeave={this.handleMouse(false, tab)} */}
-                        <div>
-                          <img
-                            alt={tab.url}
-                            className="icon"
-                            src={tab.favIconUrl || ""}
-                          ></img>
-                          {tab.title}
-                        </div>
-                        {this.state.mouseTabId === tab.id ? (
-                          <DeleteOutlined
-                            onClick={this.onTabDelete(
-                              tab,
-                              domain,
-                              domainValues
-                            )}
-                          />
-                        ) : null}
-                      </div>
-                    )
-                  })
-                }
-              ]}
-            />
-          )
-        })}
+        {Object.entries(currentWindowTab)?.length ? (
+          Object.entries(currentWindowTab).map(([domain, domainValues]) => {
+            return (
+              <Collapse
+                accordion
+                key={domain}
+                items={[
+                  {
+                    key: domain,
+                    label: domain,
+                    children:
+                      domainValues.tabs.length &&
+                      domainValues.tabs.map((tab, tabIdx) => {
+                        return (
+                          <div
+                            key={tab.id}
+                            className="tab-one flex-y-center flex-x-between"
+                            onClick={this.tabClick}
+                          >
+                            {/* onMouseEnter={this.handleMouse(true, tab)}
+                      onMouseLeave={this.handleMouse(false, tab)} */}
+                            <div>
+                              <img
+                                alt={tab.url}
+                                className="icon"
+                                src={tab.favIconUrl || ""}
+                              ></img>
+                              {tab.title}
+                            </div>
+                            {this.state.mouseTabId === tab.id ? (
+                              <DeleteOutlined
+                                onClick={this.onTabDelete(
+                                  tab,
+                                  domain,
+                                  domainValues
+                                )}
+                              />
+                            ) : null}
+                          </div>
+                        )
+                      })
+                  }
+                ]}
+              />
+            )
+          })
+        ) : (
+          // 创建新Window
+          <CreateNewWindow></CreateNewWindow>
+        )}
+        {/* {!Object.entries(currentWindowTab)?.length && (
+          <CreateNewWindow></CreateNewWindow>
+        )} */}
         {/* </Space> */}
       </div>
       // </div>
+      // {!domainValues.tabs.length && (
+      //   <CreateNewWindow></CreateNewWindow>
+      // )}
     )
   }
   componentDidMount() {

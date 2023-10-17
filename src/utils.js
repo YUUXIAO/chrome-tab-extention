@@ -10,7 +10,7 @@ export const extractDomain = (url) => {
 // 当前窗口tab按照域名排序
 export const convertTabsData = (allTabs) => {
   console.error("当前窗口tab按照域名排序", allTabs)
-  if (!allTabs?.length) return []
+  if (!allTabs?.length) return {}
   // 按照域名分组归类
   const domainSortData = Object.create(null)
   allTabs.forEach((tab) => {
