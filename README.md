@@ -4,8 +4,13 @@ This project was bootstrapped with [Create React App](https://github.com/faceboo
 
 ## TODO LIST
 
+### 收藏功能（收藏读取收藏夹的内容 && 点击收藏也收藏到标签栏）
+
+### 稍后再看（关闭tab||window，显示浮窗）
+
 1、当前窗口新建空白 tab,显示所有该窗口的 tablist
 2、快捷键处理 tab
+3、合并所有窗口域名
 
 ## Available Scripts
 

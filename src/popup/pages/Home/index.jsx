@@ -1,12 +1,13 @@
 import "./index.less"
 import { Tabs, Input, Collapse, Space, Switch } from "antd"
 import React from "react"
-import { DeleteOutlined } from "@ant-design/icons"
+import { DeleteOutlined, StarOutlined, StarFilled } from "@ant-design/icons"
 import { mockWindowsData, mockTabsData } from "@/api/popup.js"
 import ChromeUtils from "@/apiUtils.js"
 import { extractDomain, updateDomainData, convertTabsData } from "@/utils"
-
 import CreateNewWindow from "../components/createNewWindow"
+import Store from "@/store/index"
+import TabPane from "antd/es/tabs/TabPane"
 
 const { Search } = Input
 // TODO 抽出一个类的实现
@@ -18,8 +19,23 @@ class Home extends React.Component {
     this.state = {
       activeTab: "1",
       windowTabs: [],
-      currentWindowTab: []
+      currentWindowTab: [],
+      // 收藏信息
+      favorUrlMaps: [],
+      favorUrls: new Set()
     }
+  }
+  componentDidMount() {
+    this.getAllWindows()
+    console.error("stroe", Store.getState())
+    const userStore = Store.getState().user
+    Store.subscribe(() => {
+      this.setState({
+        favorUrlMaps: userStore.favorUrlMaps,
+        favorUrls: userStore.favorUrls
+      })
+    })
+    console.error(111, this.state.favorUrlMaps)
   }
   // 关闭窗口
   // TODO 抽取刷新currentWindowTab、windowDomain、activeTab的方法
@@ -81,8 +97,28 @@ class Home extends React.Component {
     // TODO mock
     ChromeUtils.toggleTab(tab)
   }
+  // 收藏tab
+  onTabCollect = (e, tab) => {
+    e.stopPropagation()
+    const { url } = tab
+    const hasFavor = this.state.favorUrls.has(url)
+    console.error("是否已收藏---", hasFavor)
+    if (hasFavor) {
+      Store.dispatch({
+        type: "favor_reduce",
+        payload: tab
+      })
+    } else {
+      Store.dispatch({
+        type: "favor_add",
+        payload: tab
+      })
+    }
+    // const hasCollected = mockUserCollect.
+  }
   // 删除单个tab
-  onTabDelete = (tab, domain, domainValues) => {
+  onTabDelete = (e, tab, domain, domainValues) => {
+    e.stopPropagation()
     ChromeUtils.deleteTab(tab.id)
     // domainValues 如果该域名下的数据全部删除了要更新列表
     // 更新域名下的数据
@@ -172,7 +208,7 @@ class Home extends React.Component {
     console.error("windowSortList", windowSortList)
   }
   render() {
-    const { windowTabs, activeTab, currentWindowTab } = this.state
+    const { windowTabs, activeTab, favorUrls, currentWindowTab } = this.state
     return (
       <div className="home-wrapper">
         {/* 搜索当前窗口 */}
@@ -210,7 +246,7 @@ class Home extends React.Component {
                 items={[
                   {
                     key: domain,
-                    label: domain,
+                    label: <div>{domain}</div>,
                     children:
                       domainValues.tabs.length &&
                       domainValues.tabs.map((tab, tabIdx) => {
@@ -230,15 +266,25 @@ class Home extends React.Component {
                               ></img>
                               {tab.title}
                             </div>
-                            {this.state.mouseTabId === tab.id ? (
+                            <div className="action flex-x-start">
+                              {/* 收藏按钮 */}
+                              {favorUrls.has(tab.url) ? (
+                                <StarFilled
+                                  style={{ color: "#eebe77" }}
+                                  onClick={(e) => this.onTabCollect(e, tab)}
+                                />
+                              ) : (
+                                <StarOutlined
+                                  onClick={(e) => this.onTabCollect(e, tab)}
+                                />
+                              )}
+                              {/* 删除按钮 */}
                               <DeleteOutlined
-                                onClick={this.onTabDelete(
-                                  tab,
-                                  domain,
-                                  domainValues
-                                )}
+                                onClick={(e) =>
+                                  this.onTabDelete(e, tab, domain, domainValues)
+                                }
                               />
-                            ) : null}
+                            </div>
                           </div>
                         )
                       })
@@ -261,9 +307,6 @@ class Home extends React.Component {
       //   <CreateNewWindow></CreateNewWindow>
       // )}
     )
-  }
-  componentDidMount() {
-    this.getAllWindows()
   }
 }
 
