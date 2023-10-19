@@ -36,7 +36,7 @@ export const updateDomainData = (
 ) => {
   const { tabs } = domainData
 
-  const hasOtherTab = tabs.filter((i) => i.id !== tab.id)
+  const hasOtherTab = tabs.filter((i) => i.id !== tab.id) // 当前域名下是否还有其他tab
   if (hasOtherTab.length) {
     currentWindowData[domain] = {
       ...domainData,
@@ -45,5 +45,11 @@ export const updateDomainData = (
   } else {
     Reflect.deleteProperty(currentWindowData, `${domain}`)
   }
+  return currentWindowData
+}
+
+// 删除一整个域名下的所有tab
+export const deleteDomainData = (domain, currentWindowData) => {
+  Reflect.deleteProperty(currentWindowData, `${domain}`)
   return currentWindowData
 }

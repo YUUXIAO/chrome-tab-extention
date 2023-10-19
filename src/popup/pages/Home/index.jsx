@@ -1,10 +1,10 @@
 import "./index.less"
-import { Tabs, Input, Collapse, Space, Switch } from "antd"
+import { Tabs, Input, Collapse, Space, Switch, Button } from "antd"
 import React from "react"
 import { DeleteOutlined, StarOutlined, StarFilled } from "@ant-design/icons"
 import { mockWindowsData, mockTabsData } from "@/api/popup.js"
 import ChromeUtils from "@/apiUtils.js"
-import { extractDomain, updateDomainData, convertTabsData } from "@/utils"
+import { updateDomainData, deleteDomainData, convertTabsData } from "@/utils"
 import CreateNewWindow from "../components/createNewWindow"
 import Store from "@/store/index"
 import TabPane from "antd/es/tabs/TabPane"
@@ -40,14 +40,14 @@ class Home extends React.Component {
   // 关闭窗口
   // TODO 抽取刷新currentWindowTab、windowDomain、activeTab的方法
   onEdit = (targetKey, action) => {
-    let { windowTabs, currentWindowTab } = this.state
+    let { windowTabs } = this.state
     console.error("targetKey", targetKey, action)
     if (action === "remove") {
       // 删除窗口所有tab
       // const tabIds = currentWindowTab.tabs.map((i) => i.id)
       // ChromeUtils.deleteTab(tabIds)
       const targetWindow = windowTabs.find((i) => i.windowId === targetKey)
-      const tabIds = targetWindow.map((i) => i.id)
+      const tabIds = targetWindow.tabs.map((i) => i.id)
       ChromeUtils.deleteTab(tabIds)
       this.setState({
         windowTabs,
@@ -64,7 +64,7 @@ class Home extends React.Component {
       const newWindowData = {
         name: `新增窗口-${windowTabs.length - 1}`,
         tabs: [],
-        isCurrent: true,
+        // isCurrent: true,
         windowId: `templId-${windowTabs.length}`
       }
       windowTabs.push(newWindowData)
@@ -132,6 +132,21 @@ class Home extends React.Component {
       currentWindowTab: updateWindowData
     })
   }
+  // 删除一组tab
+  onDomainTabDelete = (e, domain, tabs) => {
+    e.stopPropagation()
+    tabs.forEach((tab) => {
+      ChromeUtils.deleteTab(tab.id)
+    })
+    // 更新域名下的数据
+    const updateWindowData = deleteDomainData(
+      domain,
+      this.state.currentWindowTab
+    )
+    this.setState({
+      currentWindowTab: updateWindowData
+    })
+  }
   // 搜索当前窗口
   onSearch = (keyword) => {
     let result = []
@@ -166,13 +181,59 @@ class Home extends React.Component {
   }
   // TODO 切换 switch
   onSwitchChange = (val) => {}
+
+  // 窗口合并
+  windowsCombine = async () => {
+    const { windowTabs, activeTab } = this.state
+    console.error("allTabs", mockTabsData)
+    const allTabs = await ChromeUtils.getTabLists()
+    const curWindowId = await ChromeUtils.getCurrentWindowId()
+    // const allTabs = mockTabsData
+    const otherWindowIds = windowTabs
+      .filter((i) => i.windowId !== curWindowId)
+      .map((i) => i.windowId)
+
+    if (otherWindowIds?.length) {
+      // const windowSortList = convertTabsData(allTabs) // 以域名排序的sort
+      // 删除其他window
+      // otherWindowIds.map((i) => ChromeUtils.deleteWindow(i.id))
+      console.error("otherWindowIds", otherWindowIds)
+      let otherTbas = []
+      windowTabs.forEach((i) => {
+        if (i.windowId !== curWindowId) {
+          otherTbas = [...otherTbas, ...i.tabs]
+        }
+      })
+      console.error("otherTbas", otherTbas)
+      otherTbas.forEach((tab) => {
+        const createProperties = {
+          windowId: curWindowId,
+          url: tab.url
+        }
+        ChromeUtils.createNewTab(createProperties)
+      })
+
+      otherWindowIds.map((i) => ChromeUtils.deleteWindow(i.id))
+    } else {
+      alert("当前只有一个窗口，不能进行合并")
+    }
+    this.getAllWindows()
+  }
   // 获取所有tabs
   async getAllWindows() {
     // TODO mock
-    // const windows = await ChromeUtils.getAllWindow()
-    // const allTabs = await ChromeUtils.getTabLists()
-    const windows = mockWindowsData
-    const allTabs = mockTabsData
+    const ajaxArray = [
+      ChromeUtils.getAllWindow(),
+      ChromeUtils.getTabLists(),
+      ChromeUtils.getCurrentWindowId()
+    ]
+    const [windows, allTabs, curWindowId] = await Promise.all(ajaxArray)
+
+    // const windows = mockWindowsData
+    // const allTabs = mockTabsData
+    // const curWindowId = ""
+    console.error("谷歌api获取窗口信息", windows)
+    console.error("谷歌api获取tab信息", allTabs)
 
     const windowMap = {}
     const windowTabs = []
@@ -182,18 +243,13 @@ class Home extends React.Component {
       currentTabs = allTabs.filter((i) => i.windowId === parentId)
       // TODO 无痕模式
       const windowInfo = {
-        isCurrent: win.focused,
+        // isCurrent: win.focused,
         name: `窗口-${winIdx}`,
         windowId: parentId,
         tabs: currentTabs
       }
       //   console.error("窗口", win)
 
-      if (win.focused) {
-        this.setState({
-          activeTab: parentId
-        })
-      }
       // TODO 删除map
       windowMap[parentId] = windowInfo
       windowTabs.push(windowInfo)
@@ -202,8 +258,10 @@ class Home extends React.Component {
     const windowSortList = convertTabsData(currentTabs) // 以域名排序的sort
     this.setState({
       windowTabs: windowTabs,
+      activeTab: curWindowId,
       currentWindowTab: windowSortList
     })
+
     console.error("windowTabs", windowTabs)
     console.error("windowSortList", windowSortList)
   }
@@ -223,6 +281,12 @@ class Home extends React.Component {
           {/* 开放所有tab搜索 */}
           <Switch onChange={this.onSwitchChange} />
         </div>
+        {/* 合并所有窗口到一个窗口下 */}
+        {
+          <Button type="primary" onClick={this.windowsCombine}>
+            合并所有窗口
+          </Button>
+        }
         {/* 窗口Tabs */}
         <Tabs
           type="editable-card"
@@ -235,8 +299,6 @@ class Home extends React.Component {
           onChange={this.onChange}
         ></Tabs>
         {/* 列表 */}
-        {/* <div className='list-wrapper'> */}
-        {/* <Space direction="vertical"> */}
         {Object.entries(currentWindowTab)?.length ? (
           Object.entries(currentWindowTab).map(([domain, domainValues]) => {
             return (
@@ -246,7 +308,16 @@ class Home extends React.Component {
                 items={[
                   {
                     key: domain,
-                    label: <div>{domain}</div>,
+                    label: (
+                      <div className="flex-x-between flex-y-center">
+                        {domain}
+                        <DeleteOutlined
+                          onClick={(e) =>
+                            this.onDomainTabDelete(e, domain, domainValues.tabs)
+                          }
+                        />
+                      </div>
+                    ),
                     children:
                       domainValues.tabs.length &&
                       domainValues.tabs.map((tab, tabIdx) => {
@@ -258,9 +329,9 @@ class Home extends React.Component {
                           >
                             {/* onMouseEnter={this.handleMouse(true, tab)}
                       onMouseLeave={this.handleMouse(false, tab)} */}
-                            <div>
+                            <div className="flex-x-start">
                               <img
-                                alt={tab.url}
+                                alt=""
                                 className="icon"
                                 src={tab.favIconUrl || ""}
                               ></img>

@@ -12,6 +12,8 @@ This project was bootstrapped with [Create React App](https://github.com/faceboo
 2、快捷键处理 tab
 3、合并所有窗口域名
 
+### antDesign 按需引入,vite加载慢
+
 ## Available Scripts
 
 In the project directory, you can run:

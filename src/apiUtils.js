@@ -3,15 +3,16 @@
 /**
  * 获取tabs列表
  */
-export const getTabLists = () => {
+export const getTabLists = (queryInfo = {}) => {
   return new Promise((resolve) => {
-    chrome.tabs.query({}, (tabs) => resolve(tabs))
+    chrome.tabs.query(queryInfo, (tabs) => resolve(tabs))
   })
 }
 
 // 创建新tab
-export const createNewTab = () => {
-  chrome.tabs.create({}, (tab) => {
+export const createNewTab = (queryInfo = {}) => {
+  console.error("创建新tab", queryInfo)
+  chrome.tabs.create(queryInfo, (tab) => {
     console.error("创建新tab成功")
   })
 }
@@ -81,10 +82,19 @@ export const getAllWindow = () => {
   })
 }
 
+// 删除一个窗口
+export const deleteWindow = (windowId) => {
+  return new Promise((resolve) => {
+    chrome.windows.remove(windowId)
+  })
+}
+
 const ChromeUtils = {
   getAllWindow,
   getCurrentWindowId,
   deleteTab,
+  createNewTab,
+  deleteWindow,
   toggleTab,
   getCurrentTab,
   getTabLists
