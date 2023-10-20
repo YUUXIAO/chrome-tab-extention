@@ -40,12 +40,12 @@ export const getCurrentTab = () => {
 
 /**
  * 切换tab
- * @param {number} index
+ * @param {number} tab
  * @param {number} windowId 当前窗口ID
  */
-export const toggleTab = ({ index, windowId }) => {
+export const toggleTab = (tab, windowId) => {
   chrome.windows.update(windowId, { focused: true })
-  chrome.tabs.highlight({ tabs: index, windowId: windowId })
+  chrome.tabs.highlight({ tabs: tab.index })
 }
 
 /**

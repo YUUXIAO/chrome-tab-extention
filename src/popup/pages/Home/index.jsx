@@ -91,11 +91,7 @@ class Home extends React.Component {
   tabClick = (e, tab) => {
     console.error("tabClick", e, tab)
     e.stopPropagation()
-
-    // chrome.windows.update(tab.windowId, { focused: true });
-    // chrome.tabs.highlight({ tabs: tab.index, windowId: tab.windowId });
-    // TODO mock
-    ChromeUtils.toggleTab(tab)
+    ChromeUtils.toggleTab(tab, this.state.activeTab)
   }
   // 收藏tab
   onTabCollect = (e, tab) => {
@@ -222,16 +218,16 @@ class Home extends React.Component {
   // 获取所有tabs
   async getAllWindows() {
     // TODO mock
-    const ajaxArray = [
-      ChromeUtils.getAllWindow(),
-      ChromeUtils.getTabLists(),
-      ChromeUtils.getCurrentWindowId()
-    ]
-    const [windows, allTabs, curWindowId] = await Promise.all(ajaxArray)
+    // const ajaxArray = [
+    //   ChromeUtils.getAllWindow(),
+    //   ChromeUtils.getTabLists(),
+    //   ChromeUtils.getCurrentWindowId()
+    // ]
+    // const [windows, allTabs, curWindowId] = await Promise.all(ajaxArray)
 
-    // const windows = mockWindowsData
-    // const allTabs = mockTabsData
-    // const curWindowId = ""
+    const windows = mockWindowsData
+    const allTabs = mockTabsData
+    const curWindowId = ""
     console.error("谷歌api获取窗口信息", windows)
     console.error("谷歌api获取tab信息", allTabs)
 
@@ -325,7 +321,7 @@ class Home extends React.Component {
                           <div
                             key={tab.id}
                             className="tab-one flex-y-center flex-x-between"
-                            onClick={this.tabClick}
+                            onClick={(e) => this.tabClick(e, tab)}
                           >
                             {/* onMouseEnter={this.handleMouse(true, tab)}
                       onMouseLeave={this.handleMouse(false, tab)} */}
@@ -368,15 +364,7 @@ class Home extends React.Component {
           // 创建新Window
           <CreateNewWindow></CreateNewWindow>
         )}
-        {/* {!Object.entries(currentWindowTab)?.length && (
-          <CreateNewWindow></CreateNewWindow>
-        )} */}
-        {/* </Space> */}
       </div>
-      // </div>
-      // {!domainValues.tabs.length && (
-      //   <CreateNewWindow></CreateNewWindow>
-      // )}
     )
   }
 }
