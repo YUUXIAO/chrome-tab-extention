@@ -1,21 +1,41 @@
 // import { useState } from "react"
-import React from "react"
+import React, { useState } from "react"
 import ReactDOM from "react-dom/client"
 import "./index.less"
 import floatLogo from "@/assests/images/logo.png"
+import QuickMenuPop from "./components/quickMenuPop.jsx"
 
 function ContentIndex() {
-  console.error("chromr Tabs 注入页面content代码")
+  console.error("chromr Tabs 注入页面content代码------")
+
+  const [isQuickVisible, setIsQuickVisible] = useState(false)
+
+  const openQuickModal = (visble) => {
+    console.error("11", visble)
+    // e.stopPropagation()
+    setIsQuickVisible(visble)
+  }
+
   return (
     <div id="content-container">
-      <div>content 页岩 </div>
-      {/* <div className="float-image">
-        <img alt="" src={floatLogo} className="img"></img>
-      </div> */}
+      <div className="float-image">
+        <img
+          alt=""
+          src={floatLogo}
+          className="img"
+          onClick={() => openQuickModal(true)}
+        ></img>
+      </div>
+      {/* 快捷弹窗 */}
+      <QuickMenuPop
+        isVisible={isQuickVisible}
+        toggleModal={() => openQuickModal(false)}
+      />
     </div>
   )
 }
 
+// TODO build 要打开
 // 创建id为CRX-container的div
 // const app = document.createElement("div")
 // app.id = "content-container"

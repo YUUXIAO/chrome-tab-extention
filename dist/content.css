@@ -1,1 +1,1 @@
-.float-image{position:fixed;bottom:100px;right:100px;z-index:999}.float-image .img{width:100px;height:100px;border-radius:50%;border:1px solid red}
+.float-image{position:fixed;bottom:90px;right:90px;z-index:999;cursor:pointer}.float-image .img{width:40px;height:40px;border-radius:50%}

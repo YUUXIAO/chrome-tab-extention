@@ -5,6 +5,9 @@
   "scripts": {
     "start": "vite",
     "build": "vite build -c vite.config.js && vite build -c vite.content.config.js",
+    "build-content": "vite build -c vite.content.config.js",
+    "build-popup": "vite build -c vite.config.js",
+    "build-background": "vite build -c vite.background.config.js",
     "serve": "vite preview",
     "shakingMock": "node src/scripts/shakingMock.js"
   },

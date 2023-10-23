@@ -7,7 +7,6 @@ import ChromeUtils from "@/apiUtils.js"
 import { updateDomainData, deleteDomainData, convertTabsData } from "@/utils"
 import CreateNewWindow from "../components/createNewWindow"
 import Store from "@/store/index"
-import TabPane from "antd/es/tabs/TabPane"
 
 const { Search } = Input
 // TODO 抽出一个类的实现
@@ -17,8 +16,8 @@ class Home extends React.Component {
   constructor(props) {
     super(props)
     this.state = {
-      activeTab: "1",
-      windowTabs: [],
+      activeTab: null, // 当前活跃窗口ID
+      windowTabs: [], // 所有窗口数据
       currentWindowTab: [],
       // 收藏信息
       favorUrlMaps: [],
@@ -35,7 +34,10 @@ class Home extends React.Component {
         favorUrls: userStore.favorUrls
       })
     })
-    console.error(111, this.state.favorUrlMaps)
+    // console.error(111, this.state.favorUrlMaps)
+    // console.error("popup页面获取background 的数据1-----")
+    // const background = chrome.extension.getBackgroundPage()
+    // console.log(JSON.stringify(background))
   }
   // 关闭窗口
   // TODO 抽取刷新currentWindowTab、windowDomain、activeTab的方法
@@ -81,11 +83,12 @@ class Home extends React.Component {
     const { windowTabs } = this.state
     const tabs = windowTabs.find((i) => i.windowId === winId)?.tabs || []
     const windowSortList = convertTabsData(tabs) // 以域名排序的sort
-    console.error("windowTabs", windowTabs)
+    // console.error("windowTabs", windowTabs)
     this.setState({
       currentWindowTab: windowSortList,
       activeTab: winId
     })
+    console.error("当前窗口tab数据---", windowSortList)
   }
   // 切换tab
   tabClick = (e, tab) => {
@@ -128,20 +131,57 @@ class Home extends React.Component {
       currentWindowTab: updateWindowData
     })
   }
-  // 删除一组tab
-  onDomainTabDelete = (e, domain, tabs) => {
+  // 删除该域名下所有tab
+  onDomainTabDelete = (e, domain, domainValues) => {
     e.stopPropagation()
+    const { currentWindowTab, windowTabs, activeTab } = this.state
+    console.error("删除该域名下所有tab", domain, domainValues)
+    console.error(windowTabs)
+    const { tabs } = domainValues
     tabs.forEach((tab) => {
       ChromeUtils.deleteTab(tab.id)
     })
-    // 更新域名下的数据
-    const updateWindowData = deleteDomainData(
-      domain,
-      this.state.currentWindowTab
-    )
-    this.setState({
-      currentWindowTab: updateWindowData
-    })
+    // 判断当前窗口是否还有其他tab
+    const updateWindowTabData = deleteDomainData(domain, currentWindowTab)
+    // const deleteTabLen = tabs.length
+    // const curWindowTabsLen =
+    // Reflect.deleteProperty(currentWindowTab, `${domain}`)
+    console.error("删除后的数据", updateWindowTabData)
+    if (Object.keys(updateWindowTabData)?.length) {
+      // 还有其他tab数据
+      this.setState({
+        currentWindowTab: updateWindowTabData
+      })
+    } else {
+      // 更新窗口
+      const otherWindows = windowTabs.filter((i) => i.windowId !== activeTab)
+      const updateWindowId = otherWindows[0]?.windowId || null
+      const activeTabData = convertTabsData(otherWindows[0]?.tabs)
+      this.setState({
+        currentWindowTab: activeTabData,
+        activeTab: updateWindowId,
+        windowTabs: otherWindows
+      })
+      ChromeUtils.toggleWindow(updateWindowId)
+    }
+    // 更新窗口
+    // const { activeTab, currentWindowTab, windowTabs } = this.state
+    // const otherWindows = windowTabs.filter((i) => i.windowId !== activeTab)
+    // const updateWindowId = otherWindows[0]?.windowId || null
+    // tabs.forEach((tab) => {
+    //   ChromeUtils.deleteTab(tab.id)
+    // })
+    // console.error("updateWindowId", updateWindowId)
+    // console.error("otherWindows", otherWindows)
+    // // 更新域名下的数据
+    // if (otherWindows?.length) {
+    //   ChromeUtils.toggleWindow(updateWindowId)
+    //   const updateWindowData = deleteDomainData(domain, currentWindowTab)
+    //   this.setState({
+    //     currentWindowTab: updateWindowData,
+    //     activeTab: updateWindowId
+    //   })
+    // }
   }
   // 搜索当前窗口
   onSearch = (keyword) => {
@@ -181,8 +221,7 @@ class Home extends React.Component {
   // 窗口合并
   windowsCombine = async () => {
     const { windowTabs, activeTab } = this.state
-    console.error("allTabs", mockTabsData)
-    const allTabs = await ChromeUtils.getTabLists()
+    // const allTabs = await ChromeUtils.getTabLists()
     const curWindowId = await ChromeUtils.getCurrentWindowId()
     // const allTabs = mockTabsData
     const otherWindowIds = windowTabs
@@ -192,24 +231,25 @@ class Home extends React.Component {
     if (otherWindowIds?.length) {
       // const windowSortList = convertTabsData(allTabs) // 以域名排序的sort
       // 删除其他window
-      // otherWindowIds.map((i) => ChromeUtils.deleteWindow(i.id))
-      console.error("otherWindowIds", otherWindowIds)
-      let otherTbas = []
+      // otherWindowIds.map((i) => ChromeUtils.deleteWindow(i.id))\
+      // 复制窗口Tab
+      console.error("其他窗口id----", otherWindowIds, typeof otherWindowIds)
+      let otherTabs = []
       windowTabs.forEach((i) => {
         if (i.windowId !== curWindowId) {
-          otherTbas = [...otherTbas, ...i.tabs]
+          otherTabs = [...otherTabs, ...i.tabs]
         }
       })
-      console.error("otherTbas", otherTbas)
-      otherTbas.forEach((tab) => {
+      console.error("其他窗口信息tab----", otherTabs)
+      otherTabs.forEach((tab) => {
         const createProperties = {
           windowId: curWindowId,
           url: tab.url
         }
         ChromeUtils.createNewTab(createProperties)
       })
-
-      otherWindowIds.map((i) => ChromeUtils.deleteWindow(i.id))
+      // 删除其他窗口
+      otherWindowIds.map((i) => ChromeUtils.deleteWindow(i))
     } else {
       alert("当前只有一个窗口，不能进行合并")
     }
@@ -218,48 +258,62 @@ class Home extends React.Component {
   // 获取所有tabs
   async getAllWindows() {
     // TODO mock
-    // const ajaxArray = [
-    //   ChromeUtils.getAllWindow(),
-    //   ChromeUtils.getTabLists(),
-    //   ChromeUtils.getCurrentWindowId()
-    // ]
-    // const [windows, allTabs, curWindowId] = await Promise.all(ajaxArray)
+    const ajaxArray = [
+      ChromeUtils.getAllWindow(),
+      ChromeUtils.getTabLists(),
+      ChromeUtils.getCurrentWindowId()
+    ]
+    const [windows, allTabs, curWindowId] = await Promise.all(ajaxArray)
 
-    const windows = mockWindowsData
-    const allTabs = mockTabsData
-    const curWindowId = ""
-    console.error("谷歌api获取窗口信息", windows)
-    console.error("谷歌api获取tab信息", allTabs)
+    // const windows = mockWindowsData
+    // const allTabs = mockTabsData
+    // const curWindowId = ""
+    // console.error("谷歌api获取窗口信息", windows)
+    // console.error("谷歌api获取tab信息", allTabs)
 
     const windowMap = {}
-    const windowTabs = []
-    let currentTabs = []
+    const windowTabs = [] // 所有窗口数据
+    let activeWindowTabs = [] // 活跃窗口数据
     windows.forEach((win, winIdx) => {
       const parentId = win.id
-      currentTabs = allTabs.filter((i) => i.windowId === parentId)
-      // TODO 无痕模式
+      const currentTabs = []
+      const currentTabsAll = allTabs.filter((i) => i.windowId === parentId)
+      // 去重
+      currentTabsAll.forEach((tab) => {
+        if (!windowMap[tab.url]) {
+          currentTabs.push(tab)
+          windowMap[tab.url] = true
+        } else {
+          ChromeUtils.deleteTab(tab.id) // 重复的tab删除
+        }
+      })
+      console.error("win", win)
+      // 当前窗口数据
+      if (parentId === curWindowId) {
+        activeWindowTabs = currentTabs
+      }
+      console.error("currentTabs", currentTabs)
+      // TODO 处理无痕模式
       const windowInfo = {
-        // isCurrent: win.focused,
         name: `窗口-${winIdx}`,
         windowId: parentId,
         tabs: currentTabs
       }
-      //   console.error("窗口", win)
 
-      // TODO 删除map
-      windowMap[parentId] = windowInfo
+      // windowMap[parentId] = windowInfo
       windowTabs.push(windowInfo)
     })
 
-    const windowSortList = convertTabsData(currentTabs) // 以域名排序的sort
+    const windowSortList = convertTabsData(activeWindowTabs) // 以域名排序的sort
     this.setState({
       windowTabs: windowTabs,
       activeTab: curWindowId,
       currentWindowTab: windowSortList
     })
 
-    console.error("windowTabs", windowTabs)
-    console.error("windowSortList", windowSortList)
+    console.error("所有的窗口数据----", windowTabs)
+    console.error("当前窗口tab数据---", windowSortList)
+    // console.error("windowSortList", windowSortList)
   }
   render() {
     const { windowTabs, activeTab, favorUrls, currentWindowTab } = this.state
@@ -274,12 +328,12 @@ class Home extends React.Component {
             size="large"
             onSearch={this.onSearch}
           />
-          {/* 开放所有tab搜索 */}
-          <Switch onChange={this.onSwitchChange} />
+          {/* TODO 开放所有tab搜索 */}
+          {/* <Switch onChange={this.onSwitchChange} /> */}
         </div>
         {/* 合并所有窗口到一个窗口下 */}
         {
-          <Button type="primary" onClick={this.windowsCombine}>
+          <Button className="combine-btn" onClick={this.windowsCombine}>
             合并所有窗口
           </Button>
         }
@@ -309,7 +363,7 @@ class Home extends React.Component {
                         {domain}
                         <DeleteOutlined
                           onClick={(e) =>
-                            this.onDomainTabDelete(e, domain, domainValues.tabs)
+                            this.onDomainTabDelete(e, domain, domainValues)
                           }
                         />
                       </div>

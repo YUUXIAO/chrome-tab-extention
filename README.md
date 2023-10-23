@@ -8,11 +8,12 @@ This project was bootstrapped with [Create React App](https://github.com/faceboo
 
 ### 稍后再看（关闭tab||window，显示浮窗）
 
-1、当前窗口新建空白 tab,显示所有该窗口的 tablist
-2、快捷键处理 tab
-3、合并所有窗口域名
+- [ ] 当前窗口新建空白 tab,显示所有该窗口的 tablist
+- [ ] 快捷键处理 tab
 
-### antDesign 按需引入,vite加载慢
+- [x] 合并所有窗口域名
+
+- [ ] antDesign 按需引入,vite加载慢
 
 ## Available Scripts
 

@@ -23,6 +23,12 @@ export const createNewWindow = () => {
     console.error("创建新窗口成功", window)
   })
 }
+
+// 切换窗口
+export const toggleWindow = (windowId) => {
+  chrome.windows.update(windowId, { focused: true })
+}
+
 /**
  * 获取当前tab
  */
@@ -44,7 +50,7 @@ export const getCurrentTab = () => {
  * @param {number} windowId 当前窗口ID
  */
 export const toggleTab = (tab, windowId) => {
-  chrome.windows.update(windowId, { focused: true })
+  toggleWindow(windowId)
   chrome.tabs.highlight({ tabs: tab.index })
 }
 
@@ -97,6 +103,7 @@ const ChromeUtils = {
   deleteWindow,
   toggleTab,
   getCurrentTab,
+  toggleWindow,
   getTabLists
 }
 
