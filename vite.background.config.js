@@ -1,11 +1,14 @@
 import { defineConfig } from "vite"
 import react from "@vitejs/plugin-react"
 import path from "path"
+import dotenv from "dotenv"
+dotenv.config()
 
+console.error("打包background--- ", process.env.TEMP_BACKGROUND_DIR)
 // https://vitejs.dev/config/
 export default defineConfig({
   build: {
-    outDir: "_temp_background",
+    outDir: process.env.TEMP_BACKGROUND_DIR,
     lib: {
       entry: [path.resolve(__dirname, "src/background/index.jsx")],
       formats: ["cjs"],

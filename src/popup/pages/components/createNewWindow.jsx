@@ -23,6 +23,11 @@ class CreateNewWindow extends React.Component {
       payload: mockUserCollect
     })
 
+    // 获取搜索历史记录
+    chrome.history.search({ text: "" }, (val) => {
+      console.error("获取搜索历史记录", val)
+    })
+
     const userStore = Store.getState().user
     Store.subscribe(() => {
       console.error("22", userStore.favorUrlMaps)

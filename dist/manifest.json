@@ -15,6 +15,7 @@
     "storage",
     "tabs",
     "extension",
+    "history",
     "background",
     "unlimitedStorage",
     "declarativeNetRequest",

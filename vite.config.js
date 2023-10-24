@@ -3,9 +3,12 @@ import path from "path"
 import react from "@vitejs/plugin-react"
 import reactRefresh from "@vitejs/plugin-react-refresh"
 import AutoImport from "unplugin-auto-import/vite"
+import dotenv from "dotenv"
+dotenv.config()
 // TODO 报错了，先注释
 // import { createStyleImportPlugin, AntdResolve } from "vite-plugin-style-import"
 
+console.error("打包index--- ", process.env.TEMP_BACKGROUND_DIR)
 export default defineConfig({
   build: {},
   plugins: [
