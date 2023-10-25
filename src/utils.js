@@ -1,3 +1,5 @@
+import ChromeUtils from "@/apiUtils.js"
+
 // 域名校验，判断有无域名tab
 export const extractDomain = (url) => {
   if (typeof url !== "string") {
@@ -52,4 +54,31 @@ export const updateDomainData = (
 export const deleteDomainData = (domain, currentWindowData) => {
   Reflect.deleteProperty(currentWindowData, `${domain}`)
   return currentWindowData
+}
+
+// 过滤掉重复的tab
+export const fitlerRepeatTab = (allTabs, windowTabs) => {
+  const tabMap = {}
+  const filterResult = [] // 过滤后的tab
+  allTabs.forEach((tab) => {
+    if (!tabMap[tab.url]) {
+      filterResult.push(tab)
+      tabMap[tab.url] = true
+    } else {
+      ChromeUtils.deleteTab(tab.id) // 重复的tab删除
+    }
+  })
+  // 更新windows
+  if (windowTabs?.length) {
+    const curWindowId = allTabs[0].windowId
+    windowTabs.forEach((i) => {
+      if (i.windowId === curWindowId) {
+        i.tabs = filterResult
+      }
+    })
+  }
+  return {
+    tabs: filterResult,
+    windows: windowTabs || []
+  }
 }

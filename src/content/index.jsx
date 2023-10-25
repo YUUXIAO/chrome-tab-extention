@@ -37,11 +37,11 @@ function ContentIndex() {
 
 // TODO build 要打开
 // 创建id为CRX-container的div
-// const app = document.createElement("div")
-// app.id = "content-container"
-// // 将刚创建的div插入body最后
-// document.body.appendChild(app)
-// const root = ReactDOM.createRoot(document.getElementById("content-container"))
-// root.render(<ContentIndex />)
+const app = document.createElement("div")
+app.id = "content-container"
+// 将刚创建的div插入body最后
+document.body.appendChild(app)
+const root = ReactDOM.createRoot(document.getElementById("content-container"))
+root.render(<ContentIndex />)
 
-export default ContentIndex
+// export default ContentIndex

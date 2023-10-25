@@ -24,9 +24,10 @@ class CreateNewWindow extends React.Component {
     })
 
     // 获取搜索历史记录
-    chrome.history.search({ text: "" }, (val) => {
-      console.error("获取搜索历史记录", val)
-    })
+    // TODO
+    // chrome.history.search({ text: "" }, (val) => {
+    //   console.error("获取搜索历史记录", val)
+    // })
 
     const userStore = Store.getState().user
     Store.subscribe(() => {
