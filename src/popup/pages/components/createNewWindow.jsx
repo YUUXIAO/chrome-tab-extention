@@ -31,7 +31,6 @@ class CreateNewWindow extends React.Component {
 
     const userStore = Store.getState().user
     Store.subscribe(() => {
-      console.error("22", userStore.favorUrlMaps)
       this.setState({
         favorUrlMaps: userStore.favorUrlMaps,
         favorUrls: Array.from(userStore.favorUrls)

@@ -19,12 +19,12 @@ function ContentIndex() {
   return (
     <div id="content-container">
       <div className="float-image">
-        <img
+        {/* <img
           alt=""
           src={floatLogo}
           className="img"
           onClick={() => openQuickModal(true)}
-        ></img>
+        ></img> */}
       </div>
       {/* 快捷弹窗 */}
       <QuickMenuPop

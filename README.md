@@ -6,6 +6,8 @@ This project was bootstrapped with [Create React App](https://github.com/faceboo
 
 ### 收藏功能（收藏读取收藏夹的内容 && 点击收藏也收藏到标签栏）
 
+### 记事本 && 云同步
+
 ### 稍后再看（关闭tab||window，显示浮窗）
 
 - [ ] 当前窗口新建空白 tab,显示所有该窗口的 tablist

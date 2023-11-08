@@ -16,6 +16,7 @@ import {
   convertTabsData
 } from "@/utils"
 import CreateNewWindow from "../components/createNewWindow"
+import TodoList from "../components/TodoList"
 import Store from "@/store/index"
 
 const { Search } = Input
@@ -32,23 +33,24 @@ const operationBtns = [
     label: "合并相同tab"
   },
   {
-    key: "3",
-    label: "3rd item"
+    key: "todo",
+    label: "记事本"
   }
 ]
-
 class Home extends React.Component {
   constructor(props) {
     super(props)
     this.state = {
       activeTab: null, // 当前活跃窗口ID
       windowTabs: [], // 所有窗口数据
+      isShowTodo: false, // 是否打开记事本
       currentWindowTab: [],
       // 收藏信息
       favorUrlMaps: [],
       favorUrls: new Set()
     }
   }
+
   componentDidMount() {
     this.getAllWindows()
     console.error("stroe", Store.getState())
@@ -235,6 +237,11 @@ class Home extends React.Component {
       case "combine-tab":
         this.windowTabCombine() // 合并窗口相同tab
         break
+      case "todo":
+        this.setState({
+          isShowTodo: true // 打开记事本
+        })
+        break
       default:
         break
     }
@@ -287,18 +294,18 @@ class Home extends React.Component {
   // 获取所有tabs
   async getAllWindows() {
     // TODO mock
-    const ajaxArray = [
-      ChromeUtils.getAllWindow(),
-      ChromeUtils.getTabLists(),
-      ChromeUtils.getCurrentWindowId()
-    ]
-    const [windows, allTabs, curWindowId] = await Promise.all(ajaxArray)
+    // const ajaxArray = [
+    //   ChromeUtils.getAllWindow(),
+    //   ChromeUtils.getTabLists(),
+    //   ChromeUtils.getCurrentWindowId()
+    // ]
+    // const [windows, allTabs, curWindowId] = await Promise.all(ajaxArray)
 
-    // const windows = mockWindowsData
-    // const allTabs = mockTabsData
-    // const curWindowId = 973095260
-    // console.error("谷歌api获取窗口信息", windows)
-    // console.error("谷歌api获取tab信息", allTabs)
+    const windows = mockWindowsData
+    const allTabs = mockTabsData
+    const curWindowId = 973095260
+    console.error("谷歌api获取窗口信息", windows)
+    console.error("谷歌api获取tab信息", allTabs)
 
     // const windowMap = {}
     const windowTabs = [] // 所有窗口数据
@@ -335,7 +342,8 @@ class Home extends React.Component {
     // console.error("windowSortList", windowSortList)
   }
   render() {
-    const { windowTabs, activeTab, favorUrls, currentWindowTab } = this.state
+    const { windowTabs, isShowTodo, activeTab, favorUrls, currentWindowTab } =
+      this.state
     return (
       <div className="home-wrapper">
         {/* 搜索当前窗口 */}
@@ -474,6 +482,9 @@ class Home extends React.Component {
           // 创建新Window
           <CreateNewWindow></CreateNewWindow>
         )}
+
+        {/* 记事本 */}
+        {isShowTodo && <TodoList></TodoList>}
       </div>
     )
   }
