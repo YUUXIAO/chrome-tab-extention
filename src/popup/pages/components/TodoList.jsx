@@ -1,5 +1,15 @@
 import React from "react"
-import { Form, Button, Radio, Select, List, Input, Collapse } from "antd"
+import {
+  Form,
+  Button,
+  message,
+  Radio,
+  Select,
+  Input,
+  Modal,
+  Space,
+  Collapse
+} from "antd"
 import Store from "@/store/index"
 import { mockUserCollect } from "@/api/user"
 const { Option } = Select
@@ -9,6 +19,8 @@ class TodoList extends React.Component {
     super(props)
     this.state = {
       currentLabel: "标签1",
+      showLabelModal: false,
+      addLabelVal: "",
       enterVal: "1",
       todoList: [
         {
@@ -25,13 +37,21 @@ class TodoList extends React.Component {
   }
   onEnter = (val) => {
     const value = val.target.value
-    console.error("回车", value)
     const { todoList, currentLabel } = this.state
     const labelTodos = todoList.find((i) => i.name === currentLabel)
-    labelTodos.todos.push({
-      checked: false,
-      text: value
-    })
+    const hasSome = labelTodos.todos.some((i) => i.text === value)
+    if (!val) {
+      message.warning("不能提交空白待办~")
+      return
+    }
+    if (!hasSome) {
+      labelTodos.todos.push({
+        checked: false,
+        text: value
+      })
+    } else {
+      message.warning("该分类下已有重复待办~")
+    }
     this.setState({
       todoList: todoList
     })
@@ -42,19 +62,60 @@ class TodoList extends React.Component {
       currentLabel: val
     })
   }
+
   radioChang = (val, option) => {
     console.error("radioChang", val, option)
     option.checked = val
   }
+  onLabelInput = (val) => {
+    this.setState({
+      addLabelVal: val.target.value
+    })
+  }
+  // 添加标签
+  addLabel = () => {
+    // const instance = modal.su
+    // let val = this.refs.labelRef.value
+    const { addLabelVal, todoList } = this.state
+    console.error("val", addLabelVal)
+    if (!addLabelVal) {
+      message.warning("不能提交空白标签~")
+      return
+    }
+    const hasSameLabel = todoList.find((i) => i.name === addLabelVal)
+    if (!hasSameLabel) {
+      const todoOpt = {
+        name: addLabelVal,
+        todos: []
+      }
+      todoList.push(todoOpt)
+      this.setState({ todoList, addLabelVal: "" })
+    } else {
+      message.warning("已有重复标签~")
+    }
+  }
+  addLabelOk = () => {
+    let val = this.refs.labelRef.value
+    console.error("val", val)
+  }
   render() {
-    const { todoList } = this.state
+    const { todoList, currentLabel, showLabelModal } = this.state
     return (
-      <div className="todo-wrapper ">
+      <div className="todo-wrapper">
+        <Space.Compact style={{ width: "100%" }}>
+          <Input
+            onChange={this.onLabelInput}
+            value={this.state.addLabelVal}
+            placeholder="请输入标签名"
+          />
+          <Button type="primary" onClick={this.addLabel}>
+            添加标签
+          </Button>
+        </Space.Compact>
         <div className="flex-x-start">
           <Select
-            placeholder="Select a option and change input text above"
+            placeholder="请选择"
             onChange={this.onLabelChange}
-            allowClear
             className="w200"
             defaultValue={todoList[0].name}
           >
@@ -75,6 +136,7 @@ class TodoList extends React.Component {
             <Collapse
               bordered
               dataSource={todoList}
+              key={index}
               items={[
                 {
                   key: index,
@@ -84,6 +146,7 @@ class TodoList extends React.Component {
                       <Radio
                         onChange={(val) => this.radioChang(val, i)}
                         value={i.checked}
+                        key={i.text}
                       >
                         {i.text}
                       </Radio>

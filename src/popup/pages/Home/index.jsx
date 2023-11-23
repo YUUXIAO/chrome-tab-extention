@@ -1,5 +1,14 @@
 import "./index.less"
-import { Tabs, Input, Dropdown, Collapse, Space, Switch, Button } from "antd"
+import {
+  Tabs,
+  Input,
+  Dropdown,
+  Collapse,
+  Modal,
+  Space,
+  Switch,
+  Button
+} from "antd"
 import React from "react"
 import {
   DeleteOutlined,
