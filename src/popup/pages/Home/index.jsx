@@ -26,11 +26,12 @@ import {
 } from "@/utils"
 import CreateNewWindow from "../components/createNewWindow"
 import TodoList from "../components/TodoList"
+import UrlsGroupPop from "../components/urlsGroupPop"
+
 import Store from "@/store/index"
 
 const { Search } = Input
 // TODO 抽出一个类的实现
-// TODO build 切换api；为mock数据
 
 const operationBtns = [
   {
@@ -46,6 +47,49 @@ const operationBtns = [
     label: "记事本"
   }
 ]
+
+class DomainOne extends  React.Component{
+  
+  render(){
+    const {tabData,favorUrls,domain,domainValues} = this.props
+     return <div
+                            key={tabData.id}
+                            className="tab-one domain-header flex-y-center flex-x-between"
+                            onClick={(e) => this.props.tabClick(e, tabData)}
+                          >
+                            <div className="flex-x-start">
+                              <img
+                                alt=""
+                                className="domain-icon"
+                                src={tabData.favIconUrl || ""}
+                              ></img>
+                              {tabData.title}
+                            </div>
+                            <div className="action flex-x-end">
+                              {/* 收藏按钮 */}
+                              {favorUrls.has(tabData.url) ? (
+                                <StarFilled
+                                  className="action-icon"
+                                  onClick={(e) => this.props.onTabCollect(e, tabData)}
+                                />
+                              ) : (
+                                <StarOutlined
+                                  className="action-icon"
+                                  onClick={(e) => this.props.onTabCollect(e, tabData)}
+                                />
+                              )}
+                              {/* 删除按钮 */}
+                              <DeleteOutlined
+                                className="action-icon"
+                                onClick={(e) =>
+                                  this.props.onTabDelete(e, tabData, domain, domainValues)
+                                }
+                              />
+                            </div>
+                          </div>
+  }
+}
+
 class Home extends React.Component {
   constructor(props) {
     super(props)
@@ -53,6 +97,7 @@ class Home extends React.Component {
       activeTab: null, // 当前活跃窗口ID
       windowTabs: [], // 所有窗口数据
       isShowTodo: false, // 是否打开记事本
+      isShowUrlsGroup: false, // 设置网页组
       currentWindowTab: [],
       // 收藏信息
       favorUrlMaps: [],
@@ -82,8 +127,6 @@ class Home extends React.Component {
     console.error("targetKey", targetKey, action)
     if (action === "remove") {
       // 删除窗口所有tab
-      // const tabIds = currentWindowTab.tabs.map((i) => i.id)
-      // ChromeUtils.deleteTab(tabIds)
       const targetWindow = windowTabs.find((i) => i.windowId === targetKey)
       const tabIds = targetWindow.tabs.map((i) => i.id)
       ChromeUtils.deleteTab(tabIds)
@@ -94,11 +137,13 @@ class Home extends React.Component {
       })
     } else {
       // TODO 新增窗口
-      console.error("新增窗口")
-      const targetWindow = windowTabs.find(
-        (i) => i.windowId === this.state.activeTab
+      console.error("新增窗口22")
+
+      const hasTempWindow = windowTabs.find(
+        (i) => Boolean(String(i.windowId).includes('templId'))
       )
-      console.error("targetWindow", targetWindow)
+      if(hasTempWindow) return
+      // console.error("targetWindow", targetWindow)
       const newWindowData = {
         name: `新增窗口-${windowTabs.length - 1}`,
         tabs: [],
@@ -202,8 +247,9 @@ class Home extends React.Component {
     }
   }
   // 搜索当前窗口
-  onSearch = (keyword) => {
+  onSearch = (word) => {
     let result = []
+    let keyword = word.trim()
     const { windowTabs, activeTab } = this.state
     console.error("搜索当前窗口", keyword, activeTab)
     console.error("allTabs", windowTabs)
@@ -224,6 +270,18 @@ class Home extends React.Component {
     this.setState({
       currentWindowTab: windowSortList
     })
+// TODO 接口
+const url = `http://127.0.0.1:3000/api?keyword=${keyword}`
+    fetch(url)
+  .then(response => {
+console.error('fetch 毁掉', response)
+  })
+  .then(data => {
+    // 处理返回的数据
+  })
+  .catch(error => {
+    // 处理错误
+  });
   }
   // tab 鼠标移入移出
   handleMouse = (val, tab) => {
@@ -255,6 +313,28 @@ class Home extends React.Component {
         break
     }
   }
+
+  openUrlsGroup = ()=>{
+    // this.isShowUrlsGroup = true
+    this.setState({
+      isShowUrlsGroup: true
+    })
+  }
+
+  // 展开/隐藏tab
+  // expandDomain = ()=>{
+  //   const {expandkeys} = this.state
+  //   console.log(expandkeys)
+  //   if(expandkeys.length){
+  //     this.setState({
+  //       expandkeys:[]
+  //     })
+  //   }else {
+  //     this.setState({
+  //       expandkeys:Object.keys(this.state.currentWindowTab)
+  //     })
+  //   }
+  // }
 
   // 过滤当前窗口tab数据
   // TODO 包含所有窗口
@@ -330,10 +410,12 @@ class Home extends React.Component {
 
       // TODO 处理无痕模式
       // TODO 当前窗口挪到第一位
+      const windowName =  isActiveWindow ? `当前窗口(${currentTabs.length})` : `窗口-${winIdx}(${currentTabs.length})`
       const windowInfo = {
         isActiveWindow: isActiveWindow,
-        name: isActiveWindow ? "当前窗口" : `窗口-${winIdx}`,
+        name: windowName,
         windowId: parentId,
+        icon: currentTabs[0].favIconUrl,
         tabs: currentTabs
       }
       // windowMap[parentId] = windowInfo
@@ -351,7 +433,7 @@ class Home extends React.Component {
     // console.error("windowSortList", windowSortList)
   }
   render() {
-    const { windowTabs, isShowTodo, activeTab, favorUrls, currentWindowTab } =
+    const { windowTabs, isShowTodo,isShowUrlsGroup, activeTab, expandkeys, favorUrls, currentWindowTab } =
       this.state
     return (
       <div className="home-wrapper">
@@ -376,11 +458,11 @@ class Home extends React.Component {
           {/* <Switch onChange={this.onSwitchChange} /> */}
         </div>
         {/* 合并所有窗口到一个窗口下 */}
-        {/* {
-          <Button className="combine-btn" onClick={this.windowsCombine}>
-            合并所有窗口
+        {
+          <Button className="combine-btn" onClick={this.openUrlsGroup}>
+            查看/创建网页组
           </Button>
-        } */}
+        }
         {/* 窗口操作 */}
         {
           // <Dropdown.Button
@@ -408,29 +490,25 @@ class Home extends React.Component {
           onChange={this.onChange}
         ></Tabs>
         {/* 窗口操作 */}
-        {/* <div className="window-operation">
-          <Button type="link" onClick={this.windowsCombine}>
-            合并相同tab
-          </Button>
-        </div> */}
+        
         {/* 列表 */}
         {Object.entries(currentWindowTab)?.length ? (
           Object.entries(currentWindowTab).map(([domain, domainValues]) => {
+            const overTabOne = domainValues.tabs.length>1
             return (
               <Collapse
-                accordion
                 key={domain}
                 items={[
                   {
                     key: domain,
-                    label: (
-                      <div className="flex-x-between flex-y-center">
-                        {domain}
-                        {/* <DeleteOutlined
-                          onClick={(e) =>
-                            this.onDomainTabDelete(e, domain, domainValues)
-                          }
-                        /> */}
+                    collapsible: !overTabOne?'disabled':'header',
+                    showArrow:overTabOne,
+                    label: overTabOne ? (
+                      <div className="flex-x-between flex-y-center domain-header">
+                        <div className="flex-x-start flex-y-center">
+                          <img src={domainValues.tabs[0].favIconUrl} className="domain-icon"/>
+                          {domain}
+                        </div>
                         <CloseOutlined
                           className="domain-delete"
                           onClick={(e) =>
@@ -438,49 +516,48 @@ class Home extends React.Component {
                           }
                         />
                       </div>
-                    ),
+                    ): <DomainOne tabData={domainValues.tabs[0]} favorUrls={favorUrls} domain={domain} domainValues={domainValues} onTabCollect={this.onTabCollect} tabClick={this.tabClick} onTabDelete={this.onTabDelete}></DomainOne>,
                     children:
-                      domainValues.tabs.length &&
+                      domainValues.tabs.length>1 &&
                       domainValues.tabs.map((tab, tabIdx) => {
-                        return (
-                          <div
-                            key={tab.id}
-                            className="tab-one flex-y-center flex-x-between"
-                            onClick={(e) => this.tabClick(e, tab)}
-                          >
-                            {/* onMouseEnter={this.handleMouse(true, tab)}
-                      onMouseLeave={this.handleMouse(false, tab)} */}
-                            <div className="flex-x-start">
-                              <img
-                                alt=""
-                                className="icon"
-                                src={tab.favIconUrl || ""}
-                              ></img>
-                              {tab.title}
-                            </div>
-                            <div className="action flex-x-end">
-                              {/* 收藏按钮 */}
-                              {favorUrls.has(tab.url) ? (
-                                <StarFilled
-                                  className="action-icon"
-                                  onClick={(e) => this.onTabCollect(e, tab)}
-                                />
-                              ) : (
-                                <StarOutlined
-                                  className="action-icon"
-                                  onClick={(e) => this.onTabCollect(e, tab)}
-                                />
-                              )}
-                              {/* 删除按钮 */}
-                              <DeleteOutlined
-                                className="action-icon"
-                                onClick={(e) =>
-                                  this.onTabDelete(e, tab, domain, domainValues)
-                                }
-                              />
-                            </div>
-                          </div>
-                        )
+                        return <DomainOne tabData={tab} favorUrls={favorUrls} domain={domain} domainValues={domainValues} onTabCollect={this.onTabCollect} tabClick={this.tabClick} onTabDelete={this.onTabDelete}></DomainOne>
+                        // return (
+                        //   <div
+                        //     key={tab.id}
+                        //     className="tab-one flex-y-center flex-x-between"
+                        //     onClick={(e) => this.tabClick(e, tab)}
+                        //   >
+                        //     <div className="flex-x-start">
+                        //       <img
+                        //         alt=""
+                        //         className="domain-icon"
+                        //         src={tab.favIconUrl || ""}
+                        //       ></img>
+                        //       {tab.title}
+                        //     </div>
+                        //     <div className="action flex-x-end">
+                        //       {/* 收藏按钮 */}
+                        //       {favorUrls.has(tab.url) ? (
+                        //         <StarFilled
+                        //           className="action-icon"
+                        //           onClick={(e) => this.onTabCollect(e, tab)}
+                        //         />
+                        //       ) : (
+                        //         <StarOutlined
+                        //           className="action-icon"
+                        //           onClick={(e) => this.onTabCollect(e, tab)}
+                        //         />
+                        //       )}
+                        //       {/* 删除按钮 */}
+                        //       <DeleteOutlined
+                        //         className="action-icon"
+                        //         onClick={(e) =>
+                        //           this.onTabDelete(e, tab, domain, domainValues)
+                        //         }
+                        //       />
+                        //     </div>
+                        //   </div>
+                        // )
                       })
                   }
                 ]}
@@ -494,6 +571,7 @@ class Home extends React.Component {
 
         {/* 记事本 */}
         {isShowTodo && <TodoList></TodoList>}
+        {isShowUrlsGroup  && <UrlsGroupPop></UrlsGroupPop>}
       </div>
     )
   }

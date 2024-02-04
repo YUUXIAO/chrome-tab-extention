@@ -13,14 +13,15 @@ export const getTabLists = (queryInfo = {}) => {
 export const createNewTab = (queryInfo = {}) => {
   console.error("创建新tab", queryInfo)
   chrome.tabs.create(queryInfo, (tab) => {
-    console.error("创建新tab成功")
+    calert("创建新tab成功",JSON.stringify(tab))
   })
 }
 
 // 创建新窗口
-export const createNewWindow = () => {
-  chrome.windows.create({}, (window) => {
-    console.error("创建新窗口成功", window)
+export const createNewWindow = (params={}) => {
+  chrome.windows.create(params, (window) => {
+    // console.error("创建新窗口成功", window)
+    calert("创建新窗口成功",JSON.stringify(window))
   })
 }
 

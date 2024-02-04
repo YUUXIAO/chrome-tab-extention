@@ -16,6 +16,14 @@ This project was bootstrapped with [Create React App](https://github.com/faceboo
 - [x] 合并所有窗口域名
 
 - [ ] antDesign 按需引入,vite加载慢
+- [ ] 绑定谷歌账号
+
+- [ ] build 通过脚本处理解开chrome相关api，注释mock数据
+
+- [ ] 1、选择历史链接快捷选中
+- [ ]  2、一键批量打开【收藏、标签】
+- [ ]  3、快捷恢复（注入页面icon）
+- [ ]  网站收藏同步操作chrome书签
 
 ## Available Scripts
 

@@ -9,22 +9,22 @@ import Contnet from "@/content/index.jsx"
 const routerConfigs = createHashRouter([
   {
     path: "/",
-    element: <Contnet />,
-    // element: <PopupHome />,
-    children: [
-      {
-        path: "/popup",
-        element: <PopupHome />
-      },
-      {
-        path: "/contnet",
-        element: <Contnet />
-      },
-      {
-        path: "/todo",
-        element: <TodoList />
-      }
-    ]
+    // element: <Contnet />,
+    element: <PopupHome />,
+    // children: [
+    //   {
+    //     path: "/popup",
+    //     element: <PopupHome />
+    //   },
+    //   {
+    //     path: "/contnet",
+    //     element: <Contnet />
+    //   },
+    //   {
+    //     path: "/todo",
+    //     element: <TodoList />
+    //   }
+    // ]
   }
 ])
 

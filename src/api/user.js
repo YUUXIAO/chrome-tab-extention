@@ -1,3 +1,7 @@
+const _API={
+  history:'/user/history'
+}
+
 // 获取用户的收藏
 export const mockUserCollect = [
   {
