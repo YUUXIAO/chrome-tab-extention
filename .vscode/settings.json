@@ -21,5 +21,8 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "editor.wordWrap": "on",
-  "editor.tabSize": 2
+  "editor.tabSize": 2,
+  "[javascriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  }
 }
