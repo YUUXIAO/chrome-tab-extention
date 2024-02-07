@@ -1,7 +1,8 @@
 import React from 'react'
 import { Form, Button, Select, Input, Cascader } from 'antd'
+
 import Store from '@/store/index'
-import { mockUserCollect } from '@/api/user'
+import { mockUserCollect, createUrlTag } from '@/api/user'
 
 class UrlsGroupPop extends React.Component {
   constructor(props) {
@@ -64,33 +65,15 @@ class UrlsGroupPop extends React.Component {
   }
 
   createNewTag = () => {
-    const { formData, enterurls } = this.state
-    console.error(formData)
-    console.error(enterurls)
-    const urls = Array.from(new Set([...enterurls, ...formData.collect]))
+    const { formData, enterurls = [] } = this.state
+    const urls = Array.from(new Set([...enterurls, ...(formData.collect || [])]))
     const params = {
       urls,
       name: formData.name,
     }
-    // TODO 接口
-    const options = {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(params),
-    }
-    const url = `http://127.0.0.1:3000/createTag`
-    fetch(url, options)
-      .then(response => {
-        console.error('存网址标签', response)
-      })
-      .then(data => {
-        // 处理返回的数据
-      })
-      .catch(error => {
-        // 处理错误
-      })
+    createUrlTag(params).then(res => {
+      alert('存网址标签成功')
+    })
   }
 
   // 从收藏里面获取

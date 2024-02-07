@@ -7,6 +7,7 @@ import ChromeUtils from '@/apiUtils.js'
 import { updateDomainData, deleteDomainData, fitlerRepeatTab, convertTabsData } from '@/utils'
 import CreateNewWindow from '../components/createNewWindow'
 import TodoList from '../components/TodoList'
+import LoginPop from '../components/LoginPop'
 import UrlsGroupPop from '../components/urlsGroupPop'
 
 import Store from '@/store/index'
@@ -30,6 +31,10 @@ const operationBtns = [
   {
     key: 'create-tag',
     label: '查看/创建网页组',
+  },
+  {
+    key: 'login',
+    label: '登录/注册',
   },
 ]
 
@@ -65,6 +70,7 @@ class Home extends React.Component {
       windowTabs: [], // 所有窗口数据
       isShowTodo: false, // 是否打开记事本
       isShowUrlsGroup: false, // 设置网页组
+      isShowLogin: false,
       currentWindowTab: [],
       // 收藏信息
       favorUrlMaps: [],
@@ -163,6 +169,26 @@ class Home extends React.Component {
       })
     }
     // TODO 接口
+    const options = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        url: url,
+      }),
+    }
+    const req = `http://127.0.0.1:3000/favor`
+    fetch(req, options)
+      .then(response => {
+        console.error('收藏&&取消收藏', response)
+      })
+      .then(data => {
+        // 处理返回的数据
+      })
+      .catch(error => {
+        // 处理错误
+      })
 
     // const hasCollected = mockUserCollect.
   }
@@ -280,6 +306,13 @@ class Home extends React.Component {
           isShowUrlsGroup: true,
         })
         break
+      case 'login':
+        // this.openUrlsGroup()
+        this.setState({
+          isShowLogin: true,
+        })
+        break
+
       default:
         break
     }
@@ -398,7 +431,7 @@ class Home extends React.Component {
     // console.error("windowSortList", windowSortList)
   }
   render() {
-    const { windowTabs, isShowTodo, isShowUrlsGroup, activeTab, expandkeys, favorUrls, currentWindowTab } = this.state
+    const { windowTabs, isShowTodo, isShowUrlsGroup, isShowLogin, activeTab, expandkeys, favorUrls, currentWindowTab } = this.state
     return (
       <div className='home-wrapper'>
         {/* 搜索当前窗口 */}
@@ -418,7 +451,7 @@ class Home extends React.Component {
         } */}
         {operationBtns.map(btn => {
           return (
-            <Button type='primary' size='small' className='combine-btn' onClick={this.onOperationClick(btn.key)}>
+            <Button key={btn.key} type='primary' size='small' className='combine-btn' onClick={() => this.onOperationClick(btn)}>
               {btn.label}
             </Button>
           )
@@ -513,6 +546,7 @@ class Home extends React.Component {
         {/* 记事本 */}
         {isShowTodo && <TodoList></TodoList>}
         {isShowUrlsGroup && <UrlsGroupPop></UrlsGroupPop>}
+        {isShowLogin && <LoginPop></LoginPop>}
       </div>
     )
   }

@@ -20,6 +20,7 @@
     "unlimitedStorage",
     "declarativeNetRequest",
     "identity",
+    "storage",
     "pageCapture"
   ],
   "action": {

@@ -11,17 +11,7 @@
       "run_at": "document_end"
     }
   ],
-  "permissions": [
-    "storage",
-    "tabs",
-    "extension",
-    "history",
-    "background",
-    "unlimitedStorage",
-    "declarativeNetRequest",
-    "identity",
-    "pageCapture"
-  ],
+  "permissions": ["storage", "tabs", "extension", "history", "background", "unlimitedStorage", "declarativeNetRequest", "identity", "pageCapture"],
   "action": {
     "default_popup": "index.html",
     "default_icon": {
