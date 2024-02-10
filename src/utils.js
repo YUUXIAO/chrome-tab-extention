@@ -1,48 +1,55 @@
-import ChromeUtils from "@/apiUtils.js"
+import ChromeUtils from '@/apiUtils.js'
+
+// 判断是否登录
+export const hasLogin = () => {
+  // TODO mock
+  const browsertoken = localStorage.getItem('token')
+  console.error('判断是否登录', browsertoken)
+  if (browsertoken) return true
+  // const extentiontoken = chrome.storage.sync.get('token')
+  // chrome.storage.sync.set({ token: token }, function () {
+  //   // 通知保存完成。
+  // })
+}
 
 // 域名校验，判断有无域名tab
-export const extractDomain = (url) => {
-  if (typeof url !== "string") {
-    return "Others"
+export const extractDomain = url => {
+  if (typeof url !== 'string') {
+    return 'Others'
   }
   const ret = url.match(/(https?:\/\/[^/]+)/)
-  return ret ? ret[1] : "Others"
+  return ret ? ret[1] : 'Others'
 }
 
 // 当前窗口tab按照域名排序
-export const convertTabsData = (allTabs) => {
-  console.error("当前窗口tab按照域名排序", allTabs)
+export const convertTabsData = allTabs => {
+  console.error('当前窗口tab按照域名排序', allTabs)
   if (!allTabs?.length) return {}
   // 按照域名分组归类
   const domainSortData = Object.create(null)
-  allTabs.forEach((tab) => {
+  allTabs.forEach(tab => {
     const domain = extractDomain(tab.url)
     if (!domainSortData[domain]) {
       domainSortData[domain] = {
-        tabs: [tab]
+        tabs: [tab],
       }
     } else {
       domainSortData[domain].tabs.push(tab)
     }
   })
-  console.error("targetObj", domainSortData)
+  console.error('targetObj', domainSortData)
   return domainSortData
 }
 
 // 更新域名下的tab,return 当前tab 所有的信息
-export const updateDomainData = (
-  tab,
-  domain,
-  domainData,
-  currentWindowData
-) => {
+export const updateDomainData = (tab, domain, domainData, currentWindowData) => {
   const { tabs } = domainData
 
-  const hasOtherTab = tabs.filter((i) => i.id !== tab.id) // 当前域名下是否还有其他tab
+  const hasOtherTab = tabs.filter(i => i.id !== tab.id) // 当前域名下是否还有其他tab
   if (hasOtherTab.length) {
     currentWindowData[domain] = {
       ...domainData,
-      tabs: hasOtherTab
+      tabs: hasOtherTab,
     }
   } else {
     Reflect.deleteProperty(currentWindowData, `${domain}`)
@@ -60,7 +67,7 @@ export const deleteDomainData = (domain, currentWindowData) => {
 export const fitlerRepeatTab = (allTabs, windowTabs) => {
   const tabMap = {}
   const filterResult = [] // 过滤后的tab
-  allTabs.forEach((tab) => {
+  allTabs.forEach(tab => {
     if (!tabMap[tab.url]) {
       filterResult.push(tab)
       tabMap[tab.url] = true
@@ -71,7 +78,7 @@ export const fitlerRepeatTab = (allTabs, windowTabs) => {
   // 更新windows
   if (windowTabs?.length) {
     const curWindowId = allTabs[0].windowId
-    windowTabs.forEach((i) => {
+    windowTabs.forEach(i => {
       if (i.windowId === curWindowId) {
         i.tabs = filterResult
       }
@@ -79,6 +86,6 @@ export const fitlerRepeatTab = (allTabs, windowTabs) => {
   }
   return {
     tabs: filterResult,
-    windows: windowTabs || []
+    windows: windowTabs || [],
   }
 }

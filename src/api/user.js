@@ -2,10 +2,14 @@ import { get, post } from './http'
 const _API = {
   login: '/login',
   createTag: '/createTag', // 创建标签
+  sendMail: '/sendMail',
 }
 
 export const userLogin = payload => {
   return post(_API.login, payload)
+}
+export const sendMail = payload => {
+  return get(_API.sendMail, payload)
 }
 
 export const createUrlTag = payload => {

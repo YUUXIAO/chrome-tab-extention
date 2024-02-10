@@ -11,6 +11,7 @@ import LoginPop from '../components/LoginPop'
 import UrlsGroupPop from '../components/urlsGroupPop'
 
 import Store from '@/store/index'
+import { hasLogin } from '@/utils.js'
 
 const { Search } = Input
 // TODO 抽出一个类的实现
@@ -19,22 +20,27 @@ const operationBtns = [
   {
     key: 'combine',
     label: '窗口合并',
+    visible: true,
   },
   {
     key: 'combine-tab',
     label: '合并相同tab',
+    visible: true,
   },
   {
     key: 'todo',
     label: '记事本',
+    visible: true,
   },
   {
     key: 'create-tag',
     label: '查看/创建网页组',
+    visible: true,
   },
   {
     key: 'login',
     label: '登录/注册',
+    visible: !hasLogin(),
   },
 ]
 
@@ -437,33 +443,20 @@ class Home extends React.Component {
         {/* 搜索当前窗口 */}
         <div className='search-wrapper flex-x-start flex-y-center'>
           <Search placeholder='请输入Tab名称' allowClear enterButton='搜索' size='large' className='flex' onSearch={this.onSearch} />
-          {/* <Dropdown.Button size='large' className='operation' menu={{ items: operationBtns, onClick: this.onOperationClick }}>
-            操作
-          </Dropdown.Button> */}
           {/* TODO 开放所有tab搜索 */}
           {/* <Switch onChange={this.onSwitchChange} /> */}
         </div>
-        {/* 合并所有窗口到一个窗口下 */}
-        {/* {
-          <Button className='combine-btn' onClick={this.openUrlsGroup}>
-            查看/创建网页组
-          </Button>
-        } */}
-        {operationBtns.map(btn => {
-          return (
-            <Button key={btn.key} type='primary' size='small' className='combine-btn' onClick={() => this.onOperationClick(btn)}>
-              {btn.label}
-            </Button>
-          )
-        })}
-        {/* 窗口操作 */}
-        {
-          // <Dropdown.Button
-          //   menu={{ items: operationBtns, onClick: this.onOperationClick }}
-          // >
-          //   操作
-          // </Dropdown.Button>
-        }
+        {/* 操作按钮 */}
+        {operationBtns
+          .filter(btn => btn.visible)
+          .map(btn => {
+            return (
+              <Button key={btn.key} type='primary' size='small' className='combine-btn' onClick={() => this.onOperationClick(btn)}>
+                {btn.label}
+              </Button>
+            )
+          })}
+
         {/* 窗口Tabs */}
         <Tabs
           type='editable-card'
