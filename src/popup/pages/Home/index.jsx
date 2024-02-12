@@ -2,47 +2,52 @@ import './index.less'
 import { Tabs, Input, Dropdown, Collapse, Badge, Modal, Space, Switch, Button } from 'antd'
 import React from 'react'
 import { DeleteOutlined, StarOutlined, StarFilled, CloseOutlined } from '@ant-design/icons'
-import { mockWindowsData, mockTabsData } from '@/api/popup.js'
-import ChromeUtils from '@/apiUtils.js'
+// import { mockWindowsData, mockTabsData } from '@/api/popup.js'
+import TabUtils from '@/extentionUtils/tabUtils.js'
 import { updateDomainData, deleteDomainData, fitlerRepeatTab, convertTabsData } from '@/utils'
+import { urlCollect } from '@/api/user'
+import bookMarksUtils from '@/extentionUtils/bookmarks.js'
+
 import CreateNewWindow from '../components/createNewWindow'
 import TodoList from '../components/TodoList'
 import LoginPop from '../components/LoginPop'
 import UrlsGroupPop from '../components/urlsGroupPop'
 
 import Store from '@/store/index'
-import { hasLogin } from '@/utils.js'
+import { hasToken } from '@/utils.js'
 
 const { Search } = Input
 // TODO 抽出一个类的实现
 
-const operationBtns = [
-  {
-    key: 'combine',
-    label: '窗口合并',
-    visible: true,
-  },
-  {
-    key: 'combine-tab',
-    label: '合并相同tab',
-    visible: true,
-  },
-  {
-    key: 'todo',
-    label: '记事本',
-    visible: true,
-  },
-  {
-    key: 'create-tag',
-    label: '查看/创建网页组',
-    visible: true,
-  },
-  {
-    key: 'login',
-    label: '登录/注册',
-    visible: !hasLogin(),
-  },
-]
+const operationBtns = () => {
+  return [
+    {
+      key: 'combine',
+      label: '窗口合并',
+      visible: true,
+    },
+    {
+      key: 'combine-tab',
+      label: '合并相同tab',
+      visible: true,
+    },
+    {
+      key: 'todo',
+      label: '记事本',
+      visible: true,
+    },
+    {
+      key: 'create-tag',
+      label: '查看/创建网页组',
+      visible: true,
+    },
+    {
+      key: 'login',
+      label: '登录/注册',
+      visible: !hasToken(),
+    },
+  ]
+}
 
 class DomainOne extends React.Component {
   render() {
@@ -86,6 +91,7 @@ class Home extends React.Component {
 
   componentDidMount() {
     this.getAllWindows()
+    this.getAllBookMarks()
     console.error('stroe', Store.getState())
     const userStore = Store.getState().user
     Store.subscribe(() => {
@@ -110,7 +116,7 @@ class Home extends React.Component {
       const targetWindow = windowTabs.find(i => i.windowId === targetKey)
       const tabIds = targetWindow.tabs.map(i => i.id)
       if (!isTempWindow) {
-        ChromeUtils.deleteTab(tabIds)
+        TabUtils.deleteTab(tabIds)
       }
       this.setState({
         windowTabs,
@@ -155,7 +161,7 @@ class Home extends React.Component {
   tabClick = (e, tab) => {
     console.error('tabClick', e, tab)
     e.stopPropagation()
-    ChromeUtils.toggleTab(tab, this.state.activeTab)
+    TabUtils.toggleTab(tab, this.state.activeTab)
   }
   // 收藏tab
   onTabCollect = (e, tab) => {
@@ -174,34 +180,15 @@ class Home extends React.Component {
         payload: tab,
       })
     }
-    // TODO 接口
-    const options = {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        url: url,
-      }),
+    const payload = {
+      url,
     }
-    const req = `http://127.0.0.1:3000/favor`
-    fetch(req, options)
-      .then(response => {
-        console.error('收藏&&取消收藏', response)
-      })
-      .then(data => {
-        // 处理返回的数据
-      })
-      .catch(error => {
-        // 处理错误
-      })
-
-    // const hasCollected = mockUserCollect.
+    urlCollect(payload)
   }
   // 删除单个tab
   onTabDelete = (e, tab, domain, domainValues) => {
     e.stopPropagation()
-    ChromeUtils.deleteTab(tab.id)
+    TabUtils.deleteTab(tab.id)
     // domainValues 如果该域名下的数据全部删除了要更新列表
     // 更新域名下的数据
     const updateWindowData = updateDomainData(tab, domain, domainValues, this.state.currentWindowTab)
@@ -217,7 +204,7 @@ class Home extends React.Component {
     console.error(windowTabs)
     const { tabs } = domainValues
     tabs.forEach(tab => {
-      ChromeUtils.deleteTab(tab.id)
+      TabUtils.deleteTab(tab.id)
     })
     // 判断当前窗口是否还有其他tab
     const updateWindowTabData = deleteDomainData(domain, currentWindowTab)
@@ -240,7 +227,7 @@ class Home extends React.Component {
         activeTab: updateWindowId,
         windowTabs: otherWindows,
       })
-      ChromeUtils.toggleWindow(updateWindowId)
+      TabUtils.toggleWindow(updateWindowId)
     }
   }
   // 搜索当前窗口
@@ -361,7 +348,7 @@ class Home extends React.Component {
   // 窗口合并
   windowsCombine = async () => {
     const { windowTabs, activeTab } = this.state
-    const curWindowId = await ChromeUtils.getCurrentWindowId()
+    const curWindowId = await TabUtils.getCurrentWindowId()
     // const allTabs = mockTabsData
     const otherWindowIds = windowTabs.filter(i => i.windowId !== curWindowId).map(i => i.windowId)
 
@@ -379,26 +366,30 @@ class Home extends React.Component {
           windowId: curWindowId,
           url: tab.url,
         }
-        ChromeUtils.createNewTab(createProperties)
+        TabUtils.createNewTab(createProperties)
       })
 
-      otherWindowIds.map(i => ChromeUtils.deleteWindow(i)) // 删除其他窗口
+      otherWindowIds.map(i => TabUtils.deleteWindow(i)) // 删除其他窗口
     } else {
       alert('当前只有一个窗口，不能进行合并')
     }
     this.getAllWindows()
   }
+
+  // 获取所有标签
+  getAllBookMarks = () => {
+    bookMarksUtils.getAllBookMarks().then(bookMarks => {
+      console.error('所有标签', bookMarks)
+      Store.dispatch({
+        type: 'get_bookmarks',
+        payload: bookMarks[0].children || [],
+      })
+    })
+  }
   // 获取所有tabs
   async getAllWindows() {
-    // TODO mock
-    // const ajaxArray = [ChromeUtils.getAllWindow(), ChromeUtils.getTabLists(), ChromeUtils.getCurrentWindowId()]
-    // const [windows, allTabs, curWindowId] = await Promise.all(ajaxArray)
-
-    const windows = mockWindowsData
-    const allTabs = mockTabsData
-    const curWindowId = 973095260
-    console.error('谷歌api获取窗口信息', windows)
-    console.error('谷歌api获取tab信息', allTabs)
+    const ajaxArray = [TabUtils.getAllWindow(), TabUtils.getTabLists(), TabUtils.getCurrentWindowId()]
+    const [windows, allTabs, curWindowId] = await Promise.all(ajaxArray)
 
     // const windowMap = {}
     const windowTabs = [] // 所有窗口数据
@@ -447,7 +438,7 @@ class Home extends React.Component {
           {/* <Switch onChange={this.onSwitchChange} /> */}
         </div>
         {/* 操作按钮 */}
-        {operationBtns
+        {operationBtns()
           .filter(btn => btn.visible)
           .map(btn => {
             return (

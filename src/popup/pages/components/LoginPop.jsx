@@ -1,10 +1,9 @@
 import React from 'react'
 import { Form, Button, Space, message, Alert, Input } from 'antd'
 import Store from '@/store/index'
+import { isExtentionEnv } from '@/utils.js'
 
 import { userLogin, sendMail } from '@/api/user'
-// import { createNewWindow } from '@/apiUtils.js'
-// import { mockUserCollect } from '@/api/user'
 
 class LoginPop extends React.Component {
   constructor(props) {
@@ -67,11 +66,21 @@ class LoginPop extends React.Component {
         message.info(res.data)
         return
       }
-      const { token } = res
-      localStorage.setItem('token', token)
+      const { token, userId } = res
+      if (isExtentionEnv()) {
+        chrome.storage.sync.set({ token: token })
+      } else {
+        localStorage.setItem('token', token)
+      }
 
-      chrome.storage.sync.set({ token: token }, function () {
-        // 通知保存完成。
+      // 保存用户信息到store
+      Store.dispatch({
+        type: 'get_user',
+        payload: {
+          token,
+          userId,
+          ...data,
+        },
       })
     })
   }

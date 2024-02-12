@@ -9,30 +9,26 @@ class UrlsGroupPop extends React.Component {
     super(props)
     this.state = {
       enterurls: [' '], // 手动输入网址
-      formData: [], // 表单信息
-      favorUrlMaps: Store.getState().user.favorUrlMaps, // 收藏网址信息
+      formData: {
+        collect: [],
+      }, // 表单信息
+      favorUrlMaps: Store.getState().user.allBookmarks, // 书签收藏
     }
   }
   componentDidMount() {
-    Store.dispatch({
-      type: 'favor_add',
-      payload: mockUserCollect,
-    })
-
-    // 获取搜索历史记录
-    // TODO
-    // chrome.history.search({ text: "" }, (val) => {
-    //   console.error("获取搜索历史记录", val)
+    // const userStore = Store.getState().user
+    // // 获取所有标签
+    // bookMarksUtils.getAllBookMarks().then(bookMarks => {
+    //   console.error('所有标签', bookMarks)
+    //   Store.subscribe(() => {
+    //     this.setState({
+    //       favorUrlMaps: bookMarks,
+    //       // favorUrls: Array.from(userStore.favorUrls),
+    //     })
+    //   })
     // })
-
-    const userStore = Store.getState().user
-    Store.subscribe(() => {
-      this.setState({
-        favorUrlMaps: userStore.favorUrlMaps,
-        favorUrls: Array.from(userStore.favorUrls),
-      })
-    })
   }
+
   // 获取快捷链接
   changeFiled1 = (filed, value) => {
     const { formData, enterurls } = this.state
@@ -95,18 +91,19 @@ class UrlsGroupPop extends React.Component {
           {this.state.enterurls}
           {enterurls.map((url, idx) => {
             return (
-              <Form.Item label='域名'>
+              <Form.Item label='域名' key={idx}>
                 <Input placeholder='请输入域名' type='text' value={url} onChange={e => this.changeFiled1(idx, e.target.value)} />
                 {idx === enterurls.length - 1 && <Button onClick={this.addEnterUrl}>添加</Button>}
               </Form.Item>
             )
           })}
           <Form.Item label='从收藏批量获取' name='collect'>
-            <Select
+            <Cascader
               style={{ width: '100%' }}
               fieldNames={{
                 label: 'title',
-                value: 'url',
+                value: 'id',
+                children: 'children',
               }}
               onChange={value => this.changeFiled1('collect', value)}
               placeholder='选择收藏网址'

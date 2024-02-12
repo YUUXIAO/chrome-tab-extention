@@ -1,15 +1,23 @@
-import ChromeUtils from '@/apiUtils.js'
+import TabUtils from '@/extentionUtils/tabUtils.js'
+
+// 判断谷歌插件环境
+export const isExtentionEnv = () => {
+  const isExtension = chrome.extension
+  return Boolean(isExtension)
+}
 
 // 判断是否登录
-export const hasLogin = () => {
-  // TODO mock
-  const browsertoken = localStorage.getItem('token')
-  console.error('判断是否登录', browsertoken)
-  if (browsertoken) return true
-  // const extentiontoken = chrome.storage.sync.get('token')
-  // chrome.storage.sync.set({ token: token }, function () {
-  //   // 通知保存完成。
-  // })
+export const hasToken = async () => {
+  let token = ''
+  if (isExtentionEnv()) {
+    const data = await chrome.storage.sync.get('token')
+    console.error('判断是否登录', data)
+    token = data?.token || ''
+    return Boolean(token)
+  } else {
+    token = localStorage.getItem('token')
+    return Boolean(token)
+  }
 }
 
 // 域名校验，判断有无域名tab
@@ -72,7 +80,7 @@ export const fitlerRepeatTab = (allTabs, windowTabs) => {
       filterResult.push(tab)
       tabMap[tab.url] = true
     } else {
-      ChromeUtils.deleteTab(tab.id) // 重复的tab删除
+      TabUtils.deleteTab(tab.id) // 重复的tab删除
     }
   })
   // 更新windows
@@ -88,4 +96,18 @@ export const fitlerRepeatTab = (allTabs, windowTabs) => {
     tabs: filterResult,
     windows: windowTabs || [],
   }
+}
+
+export const getDeepKeys = (obj, key) => {
+  let result = []
+  obj.forEach(item => {
+    item.mult_url = `${obj.id}_${obj[key]}` // 做唯一标志
+    if (item?.children?.length) {
+      const val = getDeepKeys(item.children, key)
+      result = [...result, ...val]
+    } else {
+      result.push(item[key])
+    }
+  })
+  return result.filter(v => v)
 }

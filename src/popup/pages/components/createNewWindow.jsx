@@ -1,7 +1,7 @@
 import React from 'react'
-import { Form, Button, Select, Input, Cascader } from 'antd'
+import { Form, Button, Select, Input } from 'antd'
 import Store from '@/store/index'
-import { createNewWindow } from '@/apiUtils.js'
+import TabUtils from '@/extentionUtils/tabUtils.js'
 import { mockUserCollect } from '@/api/user'
 
 class CreateNewWindowCom extends React.Component {
@@ -33,7 +33,6 @@ class CreateNewWindowCom extends React.Component {
         favorUrls: Array.from(userStore.favorUrls),
       })
     })
-    console.error(111, this.state.favorUrlMaps)
   }
   // 获取快捷链接
   // getShortCut = () => {}
@@ -44,7 +43,7 @@ class CreateNewWindowCom extends React.Component {
     const data = {
       url: [field1, ...field2],
     }
-    createNewWindow(data).then(res => {
+    TabUtils.createNewWindow(data).then(res => {
       alert(JSON.stringify(res))
     })
   }

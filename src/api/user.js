@@ -3,6 +3,7 @@ const _API = {
   login: '/login',
   createTag: '/createTag', // 创建标签
   sendMail: '/sendMail',
+  favor: '/favor',
 }
 
 export const userLogin = payload => {
@@ -14,6 +15,11 @@ export const sendMail = payload => {
 
 export const createUrlTag = payload => {
   return post(_API.createTag, payload)
+}
+
+// 收藏/取消收藏网址
+export const urlCollect = payload => {
+  return get(_API.favor, payload)
 }
 
 // 获取用户的收藏

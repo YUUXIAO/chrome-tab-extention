@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { isExtentionEnv } from '@/utils.js'
 
 const BASE_URL = 'http://127.0.0.1:3000'
 
@@ -7,8 +8,16 @@ axios.defaults.timeout = 10000
 
 // 请求拦截器
 axios.interceptors.request.use(
-  config => {
-    const token = localStorage.getItem('token') || ''
+  async config => {
+    let token = ''
+    if (isExtentionEnv()) {
+      const tokenObj = await chrome.storage.sync.get('token')
+      token = tokenObj.token
+      console.error('请求拦截器-token', token)
+    } else {
+      token = localStorage.getItem('token') || ''
+    }
+    console.error(111)
     token && (config.headers.Authorization = `Bearer ${token}`)
     return config
   },
