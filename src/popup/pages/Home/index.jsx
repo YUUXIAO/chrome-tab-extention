@@ -5,7 +5,7 @@ import { DeleteOutlined, StarOutlined, StarFilled, CloseOutlined } from '@ant-de
 // import { mockWindowsData, mockTabsData } from '@/api/popup.js'
 import TabUtils from '@/extentionUtils/tabUtils.js'
 import { updateDomainData, deleteDomainData, fitlerRepeatTab, convertTabsData } from '@/utils'
-import { urlCollect } from '@/api/user'
+import { urlCollect, getUserInfo } from '@/api/user'
 import bookMarksUtils from '@/extentionUtils/bookmarks.js'
 
 import CreateNewWindow from '../components/createNewWindow'
@@ -34,12 +34,12 @@ const operationBtns = () => {
     {
       key: 'todo',
       label: '记事本',
-      visible: true,
+      visible: false,
     },
     {
       key: 'create-tag',
       label: '查看/创建网页组',
-      visible: true,
+      visible: false,
     },
     {
       key: 'login',
@@ -60,7 +60,7 @@ class DomainOne extends React.Component {
         </div>
         <div className='action flex-x-end'>
           {/* 收藏按钮 */}
-          {favorUrls.has(tabData.url) ? (
+          {favorUrls.includes(tabData.url) ? (
             <StarFilled className='action-icon' onClick={e => this.props.onTabCollect(e, tabData)} />
           ) : (
             <StarOutlined className='action-icon' onClick={e => this.props.onTabCollect(e, tabData)} />
@@ -77,33 +77,48 @@ class Home extends React.Component {
   constructor(props) {
     super(props)
     this.state = {
-      activeTab: null, // 当前活跃窗口ID
+      activeTab: '', // 当前活跃窗口ID
       windowTabs: [], // 所有窗口数据
       isShowTodo: false, // 是否打开记事本
       isShowUrlsGroup: false, // 设置网页组
       isShowLogin: false,
       currentWindowTab: [],
-      // 收藏信息
-      favorUrlMaps: [],
-      favorUrls: new Set(),
+      collectUrls: Store.getState().user.collectUrls, //收藏信息
     }
   }
 
   componentDidMount() {
+    this.getUserInfo()
     this.getAllWindows()
     this.getAllBookMarks()
-    console.error('stroe', Store.getState())
-    const userStore = Store.getState().user
+    console.error('userStore', Store.getState().user)
+
+    // Redux 更新后手动更新页面
     Store.subscribe(() => {
       this.setState({
-        favorUrlMaps: userStore.favorUrlMaps,
-        favorUrls: userStore.favorUrls,
+        collectUrls: Store.getState().user.collectUrls,
       })
     })
+
     // console.error(111, this.state.favorUrlMaps)
     // console.error("popup页面获取background 的数据1-----")
     // const background = chrome.extension.getBackgroundPage()
     // console.log(JSON.stringify(background))
+  }
+  // 获取到用户信息
+  getUserInfo = () => {
+    if (!hasToken()) return false
+    getUserInfo()
+      .then(res => {
+        console.error('获取到用户信息', res)
+        Store.dispatch({
+          type: 'get_user',
+          payload: res.data,
+        })
+      })
+      .catch(err => {
+        console.error('获取到用户失败', err)
+      })
   }
   // 关闭窗口
   // TODO 抽取刷新currentWindowTab、windowDomain、activeTab的方法
@@ -145,7 +160,7 @@ class Home extends React.Component {
     }
   }
   onChange = winId => {
-    console.error('切换tab', winId)
+    // console.error('切换tab', winId)
 
     const { windowTabs } = this.state
     const tabs = windowTabs.find(i => i.windowId === winId)?.tabs || []
@@ -155,11 +170,10 @@ class Home extends React.Component {
       currentWindowTab: windowSortList,
       activeTab: winId,
     })
-    console.error('当前窗口tab数据---', windowSortList)
+    // console.error('当前窗口tab数据---', windowSortList)
   }
   // 切换tab
   tabClick = (e, tab) => {
-    console.error('tabClick', e, tab)
     e.stopPropagation()
     TabUtils.toggleTab(tab, this.state.activeTab)
   }
@@ -167,23 +181,34 @@ class Home extends React.Component {
   onTabCollect = (e, tab) => {
     e.stopPropagation()
     const { url } = tab
-    const hasFavor = this.state.favorUrls.has(url)
-    console.error('是否已收藏---', hasFavor)
-    if (hasFavor) {
-      Store.dispatch({
-        type: 'favor_reduce',
-        payload: tab,
+    const hasFavor = this.state.collectUrls.includes(url)
+
+    if (hasToken()) {
+      const payload = {
+        url,
+      }
+      urlCollect(payload).then(res => {
+        // console.error('收藏url--', res)
+        Store.dispatch({
+          type: 'set_collect',
+          payload: res.data,
+        })
       })
     } else {
+      // 游客模式存本地
+      // TODO 登录的时候需要同步收藏
+      const collectData = JSON.parse(localStorage.getItem('collectData')) || []
+      if (hasFavor) {
+        collectData.delete(url)
+      } else {
+        collectData.push(url)
+      }
       Store.dispatch({
-        type: 'favor_add',
-        payload: tab,
+        type: 'set_collect',
+        payload: collectData,
       })
+      localStorage.setItem('collectData', collectData)
     }
-    const payload = {
-      url,
-    }
-    urlCollect(payload)
   }
   // 删除单个tab
   onTabDelete = (e, tab, domain, domainValues) => {
@@ -200,8 +225,8 @@ class Home extends React.Component {
   onDomainTabDelete = (e, domain, domainValues) => {
     e.stopPropagation()
     const { currentWindowTab, windowTabs, activeTab } = this.state
-    console.error('删除该域名下所有tab', domain, domainValues)
-    console.error(windowTabs)
+    // console.error('删除该域名下所有tab', domain, domainValues)
+    // console.error(windowTabs)
     const { tabs } = domainValues
     tabs.forEach(tab => {
       TabUtils.deleteTab(tab.id)
@@ -211,7 +236,7 @@ class Home extends React.Component {
     // const deleteTabLen = tabs.length
     // const curWindowTabsLen =
     // Reflect.deleteProperty(currentWindowTab, `${domain}`)
-    console.error('删除后的数据', updateWindowTabData)
+    // console.error('删除后的数据', updateWindowTabData)
     if (Object.keys(updateWindowTabData)?.length) {
       // 还有其他tab数据
       this.setState({
@@ -235,46 +260,26 @@ class Home extends React.Component {
     let result = []
     let keyword = word.trim()
     const { windowTabs, activeTab } = this.state
-    console.error('搜索当前窗口', keyword, activeTab)
-    console.error('allTabs', windowTabs)
     const allTabs =
       windowTabs.find(i => {
         return i.windowId === activeTab
       })?.tabs || []
     if (keyword) {
       result = allTabs.filter(i => {
-        return i.title.includes(keyword)
+        if (i.title.includes(keyword) || i.url.includes(keyword)) {
+          return i
+        }
       })
     } else {
-      console.error(windowTabs)
-      console.error(activeTab)
       result = allTabs || []
     }
+
     const windowSortList = convertTabsData(result) // 以域名排序
     this.setState({
       currentWindowTab: windowSortList,
     })
-    // TODO 接口
-    const url = `http://127.0.0.1:3000/api?keyword=${keyword}`
-    fetch(url)
-      .then(response => {
-        console.error('fetch 毁掉', response)
-      })
-      .then(data => {
-        // 处理返回的数据
-      })
-      .catch(error => {
-        // 处理错误
-      })
   }
-  // tab 鼠标移入移出
-  handleMouse = (val, tab) => {
-    console.error('鼠标移入移出')
-    const id = val ? tab.id : null
-    this.setState({
-      mouseTabId: id,
-    })
-  }
+
   // TODO 切换 switch
   onSwitchChange = val => {}
 
@@ -379,7 +384,6 @@ class Home extends React.Component {
   // 获取所有标签
   getAllBookMarks = () => {
     bookMarksUtils.getAllBookMarks().then(bookMarks => {
-      console.error('所有标签', bookMarks)
       Store.dispatch({
         type: 'get_bookmarks',
         payload: bookMarks[0].children || [],
@@ -423,12 +427,18 @@ class Home extends React.Component {
       currentWindowTab: windowSortList,
     })
 
-    console.error('所有的窗口数据----', windowTabs)
-    console.error('当前窗口tab数据---', windowSortList)
+    // console.error('所有的窗口数据----', windowTabs)
+    // console.error('当前窗口tab数据---', windowSortList)
     // console.error("windowSortList", windowSortList)
   }
+  // 设置弹窗状态
+  setPopVisible = (type, visible) => {
+    this.setState({
+      [type]: visible,
+    })
+  }
   render() {
-    const { windowTabs, isShowTodo, isShowUrlsGroup, isShowLogin, activeTab, expandkeys, favorUrls, currentWindowTab } = this.state
+    const { windowTabs, isShowTodo, isShowUrlsGroup, isShowLogin, activeTab, expandkeys, collectUrls, currentWindowTab } = this.state
     return (
       <div className='home-wrapper'>
         {/* 搜索当前窗口 */}
@@ -447,17 +457,16 @@ class Home extends React.Component {
               </Button>
             )
           })}
-
         {/* 窗口Tabs */}
         <Tabs
           type='editable-card'
           onEdit={this.onEdit}
           defaultActiveKey={windowTabs[0]?.windowId}
           activeKey={activeTab}
-          items={windowTabs?.map(i => {
+          items={windowTabs?.map((i, index) => {
             return {
               label: (
-                <div className='flex-x-start '>
+                <div className='flex-x-start' key={index}>
                   <span className='flex-x-start flex-y-center tab'>
                     <i className={i.isActiveWindow ? 'dot' : ''}></i> {i.name}
                   </span>
@@ -469,68 +478,70 @@ class Home extends React.Component {
           })}
           onChange={this.onChange}
         ></Tabs>
-        {/* 窗口操作 */}
-
         {/* 列表 */}
-        {Object.entries(currentWindowTab)?.length ? (
-          Object.entries(currentWindowTab).map(([domain, domainValues]) => {
-            const overTabOne = domainValues.tabs.length > 1
-            return (
-              <Collapse
-                key={domain}
-                items={[
-                  {
-                    key: domain,
-                    collapsible: !overTabOne ? 'disabled' : 'header',
-                    showArrow: overTabOne,
-                    label: overTabOne ? (
-                      <div className='flex-x-between flex-y-center domain-header'>
-                        <div className='flex-x-start flex-y-center'>
-                          <img src={domainValues.tabs[0].favIconUrl} className='domain-icon' />
-                          {domain}
-                        </div>
-                        <CloseOutlined className='domain-delete' onClick={e => this.onDomainTabDelete(e, domain, domainValues)} />
+        {
+          Boolean(Object.entries(currentWindowTab)?.length) && (
+            // Object.entries(currentWindowTab).map(([domain, domainValues]) => {
+            //   const overTabOne = domainValues.tabs.length > 1
+            // return (
+            <Collapse
+              // key={domain}
+              items={Object.entries(currentWindowTab).map(([domain, domainValues]) => {
+                const overTabOne = domainValues.tabs.length > 1
+                // [
+                return {
+                  key: domain,
+                  collapsible: !overTabOne ? 'disabled' : 'header',
+                  showArrow: overTabOne,
+                  label: overTabOne ? (
+                    <div className='flex-x-between flex-y-center domain-header'>
+                      <div className='flex-x-start flex-y-center'>
+                        <img src={domainValues.tabs[0].favIconUrl} className='domain-icon' />
+                        {domain}
                       </div>
-                    ) : (
-                      <DomainOne
-                        tabData={domainValues.tabs[0]}
-                        favorUrls={favorUrls}
-                        domain={domain}
-                        domainValues={domainValues}
-                        onTabCollect={this.onTabCollect}
-                        tabClick={this.tabClick}
-                        onTabDelete={this.onTabDelete}
-                      ></DomainOne>
-                    ),
-                    children:
-                      domainValues.tabs.length > 1 &&
-                      domainValues.tabs.map((tab, tabIdx) => {
-                        return (
-                          <DomainOne
-                            tabData={tab}
-                            favorUrls={favorUrls}
-                            domain={domain}
-                            domainValues={domainValues}
-                            onTabCollect={this.onTabCollect}
-                            tabClick={this.tabClick}
-                            onTabDelete={this.onTabDelete}
-                          ></DomainOne>
-                        )
-                      }),
-                  },
-                ]}
-              />
-            )
-          })
-        ) : (
-          // 创建新Window
-          <CreateNewWindow></CreateNewWindow>
-        )}
+                      <CloseOutlined className='domain-delete' onClick={e => this.onDomainTabDelete(e, domain, domainValues)} />
+                    </div>
+                  ) : (
+                    <DomainOne
+                      tabData={domainValues.tabs[0]}
+                      favorUrls={collectUrls}
+                      domain={domain}
+                      domainValues={domainValues}
+                      onTabCollect={this.onTabCollect}
+                      tabClick={this.tabClick}
+                      onTabDelete={this.onTabDelete}
+                    ></DomainOne>
+                  ),
+                  children:
+                    domainValues.tabs.length > 1 &&
+                    domainValues.tabs.map((tab, tabIdx) => {
+                      return (
+                        <DomainOne
+                          tabData={tab}
+                          favorUrls={collectUrls}
+                          domain={domain}
+                          key={tabIdx}
+                          domainValues={domainValues}
+                          onTabCollect={this.onTabCollect}
+                          tabClick={this.tabClick}
+                          onTabDelete={this.onTabDelete}
+                        ></DomainOne>
+                      )
+                    }),
+                }
+                // ]
+              })}
+            />
+          )
+          // )
+          // })
+        }
 
+        {activeTab && String(activeTab).includes('templId') && <CreateNewWindow></CreateNewWindow>}
         {/* 记事本 */}
         {isShowTodo && <TodoList></TodoList>}
         {isShowUrlsGroup && <UrlsGroupPop></UrlsGroupPop>}
-        {isShowLogin && <LoginPop></LoginPop>}
+        {isShowLogin && <LoginPop open={isShowLogin} setPopVisible={this.setPopVisible}></LoginPop>}
       </div>
     )
   }

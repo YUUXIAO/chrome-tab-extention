@@ -2,7 +2,7 @@ import React from 'react'
 import { Form, Button, Select, Input, Cascader } from 'antd'
 
 import Store from '@/store/index'
-import { mockUserCollect, createUrlTag } from '@/api/user'
+import { createUrlTag } from '@/api/user'
 
 class UrlsGroupPop extends React.Component {
   constructor(props) {

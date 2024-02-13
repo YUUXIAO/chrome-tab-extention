@@ -27,12 +27,12 @@ class CreateNewWindowCom extends React.Component {
     // })
 
     const userStore = Store.getState().user
-    Store.subscribe(() => {
-      this.setState({
-        favorUrlMaps: userStore.favorUrlMaps,
-        favorUrls: Array.from(userStore.favorUrls),
-      })
-    })
+    // Store.subscribe(() => {
+    //   this.setState({
+    //     favorUrlMaps: userStore.favorUrlMaps,
+    //     favorUrls: Array.from(userStore.favorUrls),
+    //   })
+    // })
   }
   // 获取快捷链接
   // getShortCut = () => {}

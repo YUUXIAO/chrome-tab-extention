@@ -177,7 +177,6 @@ export const getAllBookMarks = () => {
   return new Promise(resolve => {
     if (isExtentionEnv()) {
       chrome.bookmarks.getTree(function (bookmarkTreeNode) {
-        console.error('获取所有书签', bookmarkTreeNode)
         resolve(bookmarkTreeNode)
       })
     } else {

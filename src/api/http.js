@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { isExtentionEnv } from '@/utils.js'
+import { message } from 'antd'
 
 const BASE_URL = 'http://127.0.0.1:3000'
 
@@ -13,11 +14,9 @@ axios.interceptors.request.use(
     if (isExtentionEnv()) {
       const tokenObj = await chrome.storage.sync.get('token')
       token = tokenObj.token
-      console.error('请求拦截器-token', token)
     } else {
       token = localStorage.getItem('token') || ''
     }
-    console.error(111)
     token && (config.headers.Authorization = `Bearer ${token}`)
     return config
   },
@@ -31,10 +30,10 @@ axios.interceptors.response.use(
   response => {
     // 如果返回的状态码为200，说明接口请求成功，可以正常拿到数据
     // 否则的话抛出错误
-    console.error('响应拦截器', response)
-    if (response.status === 200) {
+    if (response.status === 200 && response.data.error === 0) {
       return Promise.resolve(response)
     } else {
+      // message.error(response.data.msg || response.statusText)
       return Promise.reject(response)
     }
   },

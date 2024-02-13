@@ -1,18 +1,24 @@
 import React from 'react'
-import { Form, Button, Space, message, Alert, Input } from 'antd'
+import { Form, Button, Space, Modal, Alert, Input } from 'antd'
 import Store from '@/store/index'
 import { isExtentionEnv } from '@/utils.js'
 
 import { userLogin, sendMail } from '@/api/user'
 
 class LoginPop extends React.Component {
+  formRef = React.createRef()
   constructor(props) {
     super(props)
     this.state = {
       inOneMinute: false,
       expireTime: 60,
       isShowMessage: false,
-      formData: {}, // 表单信息
+      errorMessage: '请先输入邮箱',
+      formData: {
+        email: '',
+        code: '',
+        password: '',
+      }, // 表单信息
     }
   }
   componentDidMount() {
@@ -24,6 +30,7 @@ class LoginPop extends React.Component {
     if (!email) {
       this.setState({
         isShowMessage: true,
+        errorMessage: '请先输入邮箱',
       })
       return
     }
@@ -53,35 +60,48 @@ class LoginPop extends React.Component {
     })
   }
   // 登录
-  handleLogin = () => {
+  handleLogin = async () => {
+    await this.formRef.current.validateFields()
     const { password, email, code } = this.state.formData
     const data = {
       mail: email,
       password: password,
       code,
     }
-    userLogin(data).then(res => {
-      console.error('登录成功', res)
-      if (res.error === 1) {
-        message.info(res.data)
-        return
-      }
-      const { token, userId } = res
-      if (isExtentionEnv()) {
-        chrome.storage.sync.set({ token: token })
-      } else {
-        localStorage.setItem('token', token)
-      }
+    userLogin(data)
+      .then(res => {
+        console.error('登录成功', res)
+        this.props.setPopVisible('isShowLogin', false)
 
-      // 保存用户信息到store
-      Store.dispatch({
-        type: 'get_user',
-        payload: {
-          token,
-          userId,
-          ...data,
-        },
+        const { token, userId } = res
+        if (isExtentionEnv()) {
+          chrome.storage.sync.set({ token: token })
+        } else {
+          localStorage.setItem('token', token)
+        }
+
+        // 保存用户信息到store
+        Store.dispatch({
+          type: 'get_user',
+          payload: {
+            token,
+            userId,
+            ...data,
+          },
+        })
       })
+      .catch(err => {
+        console.error(err)
+        this.setState({
+          isShowMessage: true,
+          errorMessage: err.data,
+        })
+        // Message.error(err.data)
+      })
+  }
+  alertClose = () => {
+    this.setState({
+      isShowMessage: false,
     })
   }
   changeFiled = (key, value) => {
@@ -93,41 +113,59 @@ class LoginPop extends React.Component {
   }
 
   render() {
-    const { inOneMinute, expireTime, isShowMessage, favorUrlMaps, favorUrls } = this.state
+    const { inOneMinute, errorMessage, expireTime, isShowMessage } = this.state
     return (
-      <div className='create-window-wrapper'>
-        {/* TODO 邮箱校验 */}
-        {isShowMessage && <Alert message='请先输入邮箱' type='error' />}
-        {/* 快捷按钮 */}
-        {/* <Button onClick={this.getShortCut}>获取快捷选项</Button> */}
-        <Form
-          labelCol={{
-            span: 5,
-          }}
-        >
-          <Form.Item label='邮箱' name='email' rules={[{ required: true, message: '请输入邮箱' }]}>
-            <Space.Compact>
-              <Input placeholder='请输入邮箱' type='text' onChange={e => this.changeFiled('email', e.target.value)} />
-              <Button type='primary' onClick={this.getCode}>
-                {inOneMinute ? `${expireTime}s后获取` : '获取验证码'}
+      <Modal
+        footer={null}
+        title='用户登录'
+        centered
+        width={600}
+        open={this.props.open}
+        onCancel={() => this.props.setPopVisible('isShowLogin', false)}
+      >
+        <div className='create-window-wrapper'>
+          {isShowMessage && <Alert closable message={errorMessage} type='error' onClose={this.alertClose} />}
+          <Form
+            labelCol={{
+              span: 5,
+            }}
+            validateTrigger={['onBlur', 'onChange']}
+            ref={this.formRef}
+          >
+            <Form.Item
+              label='邮箱'
+              name='email'
+              rules={[
+                { required: true, message: '请输入邮箱' },
+                {
+                  pattern: /^[a-zA-Z0-9_.-]+@[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*\.[a-zA-Z0-9]{2,6}$/,
+                  message: '邮箱格式不正确',
+                },
+              ]}
+            >
+              <Space.Compact>
+                <Input placeholder='请输入邮箱' type='text' onChange={e => this.changeFiled('email', e.target.value)} />
+                <Button type='primary' onClick={this.getCode}>
+                  {inOneMinute ? `${expireTime}s后获取` : '获取验证码'}
+                </Button>
+              </Space.Compact>
+            </Form.Item>
+
+            <Form.Item label='验证码' name='code' rules={[{ required: true, message: '请输入验证码' }]}>
+              <Input placeholder='请输入验证码' count='6' type='text' onChange={e => this.changeFiled('code', e.target.value)} />
+            </Form.Item>
+            <Form.Item label='密码' name='password' rules={[{ required: true, message: '请输入密码' }]}>
+              <Input placeholder='请输入密码' type='password' onChange={e => this.changeFiled('password', e.target.value)} />
+            </Form.Item>
+
+            <Form.Item className='flex-x-center'>
+              <Button size='large' type='primary' onClick={this.handleLogin}>
+                确定
               </Button>
-            </Space.Compact>
-          </Form.Item>
-
-          <Form.Item label='验证码' name='code' rules={[{ required: true, message: '请输入验证码' }]}>
-            <Input placeholder='请输入验证码' count='6' type='text' onChange={e => this.changeFiled('code', e.target.value)} />
-          </Form.Item>
-          <Form.Item label='密码' name='password' rules={[{ required: true, message: '请输入密码' }]}>
-            <Input placeholder='请输入密码' type='password' onChange={e => this.changeFiled('password', e.target.value)} />
-          </Form.Item>
-
-          <Form.Item className='flex-x-center'>
-            <Button size='large' type='primary' onClick={this.handleLogin}>
-              确定
-            </Button>
-          </Form.Item>
-        </Form>
-      </div>
+            </Form.Item>
+          </Form>
+        </div>
+      </Modal>
     )
   }
 }

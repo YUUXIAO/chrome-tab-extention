@@ -7,11 +7,18 @@ const initState = {
   userInfo: {}, // 用户信息
   favorUrlMaps: [], // tab信息LIST
   allBookmarks: [], // 所有书签
-  favorUrls: new Set(mockUserCollect.map(i => i.url)), // 收藏的网址
+  collectUrls: [], // 收藏的网址
 }
 
 // 定义一个纯函数reducer，专门用来操作state中的数据,要返回一个新的state
 const reducers = (state = initState, action) => {
+  // 收藏网址
+  if (action.type === 'set_collect') {
+    return {
+      ...state,
+      collectUrls: action.payload,
+    }
+  }
   // 添加收藏
   // if (action.type === 'favor_add') {
   //   console.error('acticon', action)
@@ -48,6 +55,7 @@ const reducers = (state = initState, action) => {
     return {
       ...state,
       userInfo: Object.assign({}, state.userInfo, action.payload),
+      collectUrls: action.payload.collectUrls || [],
     }
   }
 

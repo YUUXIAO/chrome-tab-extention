@@ -7,15 +7,15 @@ export const isExtentionEnv = () => {
 }
 
 // 判断是否登录
-export const hasToken = async () => {
+export const hasToken = () => {
   let token = ''
   if (isExtentionEnv()) {
-    const data = await chrome.storage.sync.get('token')
+    const data = chrome.storage.sync.get('token')
     console.error('判断是否登录', data)
     token = data?.token || ''
     return Boolean(token)
   } else {
-    token = localStorage.getItem('token')
+    token = localStorage.getItem('token') || ''
     return Boolean(token)
   }
 }
@@ -31,7 +31,6 @@ export const extractDomain = url => {
 
 // 当前窗口tab按照域名排序
 export const convertTabsData = allTabs => {
-  console.error('当前窗口tab按照域名排序', allTabs)
   if (!allTabs?.length) return {}
   // 按照域名分组归类
   const domainSortData = Object.create(null)
@@ -45,7 +44,6 @@ export const convertTabsData = allTabs => {
       domainSortData[domain].tabs.push(tab)
     }
   })
-  console.error('targetObj', domainSortData)
   return domainSortData
 }
 
