@@ -1,24 +1,20 @@
 import axios from 'axios'
-import { isExtentionEnv } from '@/utils.js'
-import { message } from 'antd'
+import storageUtils from '@/extentionUtils/storage'
+import Store from '@/store/index'
 
 const BASE_URL = 'http://127.0.0.1:3000'
+const PROD_BASE_URL = 'http://120.24.190.164:8181'
 
-axios.defaults.baseURL = BASE_URL
+axios.defaults.baseURL = PROD_BASE_URL
 axios.defaults.timeout = 10000
 
 // 请求拦截器
 axios.interceptors.request.use(
   async config => {
-    let token = ''
-    if (isExtentionEnv()) {
-      const tokenObj = await chrome.storage.sync.get('token')
-      token = tokenObj.token
-    } else {
-      token = localStorage.getItem('token') || ''
-    }
-    token && (config.headers.Authorization = `Bearer ${token}`)
-    return config
+    return storageUtils.getStorageItem('token').then(token => {
+      token && (config.headers.Authorization = `Bearer ${token}`)
+      return config
+    })
   },
   error => {
     return Promise.error(error)
@@ -28,12 +24,9 @@ axios.interceptors.request.use(
 // 响应拦截器
 axios.interceptors.response.use(
   response => {
-    // 如果返回的状态码为200，说明接口请求成功，可以正常拿到数据
-    // 否则的话抛出错误
     if (response.status === 200 && response.data.error === 0) {
       return Promise.resolve(response)
     } else {
-      // message.error(response.data.msg || response.statusText)
       return Promise.reject(response)
     }
   },
@@ -41,27 +34,20 @@ axios.interceptors.response.use(
   error => {
     if (error.response.status) {
       switch (error.response.status) {
-        // 401: 未登录
         case 401:
-          alert('未登录')
-          break
-
-        // 403 token过期
-
         case 403:
-          alert('登录过期，请重新登录')
+          Store.dispatch({
+            type: 'get_user',
+            payload: {},
+          })
           break
 
-        // 404请求不存在
-        case 404:
-          alert('网络请求不存在')
-          break
-        // 其他错误，直接抛出错误提示
         default:
-          alert(JSON.stringify(error.response.data.message))
+          console.error(JSON.stringify(error.response.data.msg))
       }
       return Promise.reject(error.response)
     }
+    return Promise.reject(error)
   }
 )
 
@@ -80,7 +66,7 @@ export function get(url, params) {
         resolve(res.data)
       })
       .catch(err => {
-        reject(err.data)
+        reject(err)
       })
   })
 }
@@ -98,7 +84,7 @@ export function post(url, params) {
         resolve(res.data)
       })
       .catch(err => {
-        reject(err.data)
+        reject(err)
       })
   })
 }

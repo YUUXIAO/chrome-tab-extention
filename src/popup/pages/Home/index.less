@@ -1,5 +1,6 @@
 .home-wrapper {
-  width: 600px;
+  width: 700px;
+  height: 600px;
   user-select: none;
 }
 
@@ -56,9 +57,13 @@
 
     .action-icon {
       font-size: 18px;
+      &.star-filled {
+        color: #f0a843;
+      }
 
       &:first-child {
-        margin-right: 2px;
+        margin-right: 4px;
+        // color: #f0a843;
       }
     }
   }
@@ -82,4 +87,15 @@
 
 .operation {
   width: 100px;
+}
+
+.ant-collapse > .ant-collapse-item > .ant-collapse-header {
+  padding: 6px 12px;
+}
+.ant-collapse .ant-collapse-content > .ant-collapse-content-box {
+  padding: 10px 12px;
+}
+
+.ant-select-dropdown {
+  width: 450px;
 }

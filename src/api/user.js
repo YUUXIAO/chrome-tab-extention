@@ -27,6 +27,11 @@ export const urlCollect = payload => {
   return get(_API.favor, payload)
 }
 
+// 获取用户标签
+export const getUrlTags = () => {
+  return get(_API.createTag)
+}
+
 // 获取用户的收藏
 export const mockUserCollect = [
   {

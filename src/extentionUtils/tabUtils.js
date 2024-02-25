@@ -1,8 +1,6 @@
 /* eslint-disable no-undef */
 
-import Store from '@/store/index'
 import { mockWindowsData, mockTabsData } from '@/api/popup.js'
-
 import { isExtentionEnv } from '@/utils.js'
 
 /**
@@ -27,10 +25,10 @@ export const createNewTab = (queryInfo = {}) => {
 }
 
 // 创建新窗口
-export const createNewWindow = (params = {}) => {
+export const createNewWindow = (params = {}, callback) => {
   chrome.windows.create(params, window => {
-    // console.error("创建新窗口成功", window)
-    calert('创建新窗口成功', JSON.stringify(window))
+    console.error('创建新窗口', window)
+    callback && callback(window)
   })
 }
 
@@ -70,8 +68,13 @@ export const toggleTab = (tab, windowId) => {
  */
 export const deleteTab = ids => {
   return new Promise(resolve => {
-    chrome.tabs.remove(ids)
-    resolve(true)
+    if (isExtentionEnv()) {
+      chrome.tabs.remove(ids, () => {
+        resolve(true)
+      })
+    } else {
+      resolve(true)
+    }
   })
 }
 
@@ -98,9 +101,11 @@ export const getCurrentWindowId = () => {
  */
 export const getAllWindow = () => {
   return new Promise(resolve => {
-    console.error(111, isExtentionEnv())
     if (isExtentionEnv()) {
-      chrome.windows.getAll({}, windows => resolve(windows))
+      chrome.windows.getAll({}, windows => {
+        console.error('获取所有窗口', windows)
+        resolve(windows)
+      })
     } else {
       resolve(mockWindowsData)
     }
@@ -124,6 +129,7 @@ const TabUtils = {
   getCurrentTab,
   toggleWindow,
   getTabLists,
+  createNewWindow,
 }
 
 export default TabUtils

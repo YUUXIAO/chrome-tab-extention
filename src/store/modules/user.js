@@ -1,9 +1,11 @@
 import { mockUserCollect } from '@/api/user'
-import { getDeepKeys } from '@/utils.js'
-
+import { getDeepKeys, hasToken } from '@/utils.js'
 // 用户模块
 
 const initState = {
+  isLogin: false,
+  loginWindowId: null,
+  aa: 1,
   userInfo: {}, // 用户信息
   favorUrlMaps: [], // tab信息LIST
   allBookmarks: [], // 所有书签
@@ -56,6 +58,16 @@ const reducers = (state = initState, action) => {
       ...state,
       userInfo: Object.assign({}, state.userInfo, action.payload),
       collectUrls: action.payload.collectUrls || [],
+      isLogin: Boolean(action.payload?.mail) || false,
+    }
+  }
+  // 获取到用户信息
+  if (action.type === 'get_loginWindow') {
+    console.error('获取到用户信息', action.payload)
+    return {
+      ...state,
+      aa: 2,
+      loginWindowId: action.payload,
     }
   }
 

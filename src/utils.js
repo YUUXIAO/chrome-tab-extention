@@ -1,4 +1,5 @@
 import TabUtils from '@/extentionUtils/tabUtils.js'
+import storageUtils from '@/extentionUtils/storage'
 
 // 判断谷歌插件环境
 export const isExtentionEnv = () => {
@@ -7,17 +8,10 @@ export const isExtentionEnv = () => {
 }
 
 // 判断是否登录
-export const hasToken = () => {
-  let token = ''
-  if (isExtentionEnv()) {
-    const data = chrome.storage.sync.get('token')
-    console.error('判断是否登录', data)
-    token = data?.token || ''
+export const hasToken = async () => {
+  storageUtils.getStorageItem('token').then(token => {
     return Boolean(token)
-  } else {
-    token = localStorage.getItem('token') || ''
-    return Boolean(token)
-  }
+  })
 }
 
 // 域名校验，判断有无域名tab
@@ -99,7 +93,6 @@ export const fitlerRepeatTab = (allTabs, windowTabs) => {
 export const getDeepKeys = (obj, key) => {
   let result = []
   obj.forEach(item => {
-    item.mult_url = `${obj.id}_${obj[key]}` // 做唯一标志
     if (item?.children?.length) {
       const val = getDeepKeys(item.children, key)
       result = [...result, ...val]

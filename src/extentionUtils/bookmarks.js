@@ -185,8 +185,28 @@ export const getAllBookMarks = () => {
   })
 }
 
+// 创建书签
+export const createBookMarks = bookmark => {
+  if (isExtentionEnv()) {
+    chrome.bookmarks.create(bookmark, result => {
+      console.error('创建书签', result)
+    })
+  }
+}
+
+// 移除书签
+export const removeBookMarks = id => {
+  if (isExtentionEnv()) {
+    chrome.bookmarks.remove(id, result => {
+      console.error('移除书签成功', result)
+    })
+  }
+}
+
 const bookMarksUtils = {
   getAllBookMarks,
+  createBookMarks,
+  removeBookMarks,
 }
 
 export default bookMarksUtils

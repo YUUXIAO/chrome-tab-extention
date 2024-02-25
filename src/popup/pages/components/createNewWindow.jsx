@@ -5,6 +5,7 @@ import TabUtils from '@/extentionUtils/tabUtils.js'
 import { mockUserCollect } from '@/api/user'
 
 class CreateNewWindowCom extends React.Component {
+  formRef = React.createRef()
   constructor(props) {
     super(props)
     this.state = {
@@ -26,7 +27,7 @@ class CreateNewWindowCom extends React.Component {
     //   console.error("获取搜索历史记录", val)
     // })
 
-    const userStore = Store.getState().user
+    // const userStore = Store.getState().user
     // Store.subscribe(() => {
     //   this.setState({
     //     favorUrlMaps: userStore.favorUrlMaps,
