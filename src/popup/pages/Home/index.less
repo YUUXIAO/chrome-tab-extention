@@ -1,13 +1,16 @@
 .home-wrapper {
   width: 700px;
-  height: 600px;
+  height: 580px;
+  overflow-y: hidden;
   user-select: none;
+  box-sizing: border-box;
 }
 
 .combine-btn {
   margin-right: 6px;
   margin-bottom: 10px;
-  background-color: #52c41a;
+  color: #4c4c4c;
+  background-color: #edeff6;
 }
 
 .list-wrapper {
@@ -20,23 +23,34 @@
   margin-bottom: 8px;
 }
 .domain-icon {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   margin-right: 8px;
   border-radius: 50%;
   background-color: #efefef;
-  display: block;
+  display: inline-block;
   overflow: hidden;
 }
 .domain-header {
   color: #333 !important;
 }
+.collap-header {
+  font-weight: 500;
+  width: 650px;
+}
+
+.edit-input {
+  border: 1px solid red;
+  width: 100px;
+}
 
 .tab-one {
   font-size: 13px;
   // height: 40px;
+  // border: 1px solid red;
   cursor: pointer;
-  padding: 4px 0;
+  padding: 0;
+  box-sizing: border-box;
   border-bottom: 1px dashed #eee;
 
   &:last-child {
@@ -46,6 +60,13 @@
   .title {
     color: @color-text;
     flex: 1;
+
+    // border: 1px solid green;
+  }
+  .sub-domain {
+    color: #aaa;
+    // border: 1px solid pink;
+    font-size: 10px;
   }
 
   .action {
@@ -70,10 +91,15 @@
 }
 
 .domain-delete {
-  color: #909399;
+  color: #b1b3b8;
+  font-size: 18px;
   margin-left: 20px;
 }
 
+.list-content {
+  height: 450px;
+  overflow-y: scroll;
+}
 .tab {
   .dot {
     width: 12px;
@@ -88,9 +114,12 @@
 .operation {
   width: 100px;
 }
+.content-info {
+  width: 482px;
+}
 
 .ant-collapse > .ant-collapse-item > .ant-collapse-header {
-  padding: 6px 12px;
+  padding: 4px 12px;
 }
 .ant-collapse .ant-collapse-content > .ant-collapse-content-box {
   padding: 10px 12px;

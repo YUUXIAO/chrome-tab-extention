@@ -11,7 +11,7 @@
       "run_at": "document_end"
     }
   ],
-  "permissions": ["storage", "tabs", "background", "bookmarks"],
+  "permissions": ["storage", "runtime", "contextMenus", "tabs", "background", "bookmarks"],
   "action": {
     "default_popup": "index.html",
     "default_icon": {

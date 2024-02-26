@@ -7,7 +7,7 @@ const getStorageItem = key => {
         resolve(val[key] || '')
       })
     } else {
-      const val = JSON.parse(localStorage.getItem(key)) || ''
+      const val = localStorage.getItem(key) || ''
       resolve(val)
     }
   })

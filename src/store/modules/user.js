@@ -21,39 +21,10 @@ const reducers = (state = initState, action) => {
       collectUrls: action.payload,
     }
   }
-  // 添加收藏
-  // if (action.type === 'favor_add') {
-  //   console.error('acticon', action)
-  //   console.error(state.favorUrls)
-  //   let listData = []
-  //   if (Array.isArray(action.payload)) {
-  //     listData = [...state.favorUrlMaps, ...action.payload]
-  //     action.payload.forEach(i => {
-  //       state.favorUrls.add(i.url)
-  //     })
-  //   } else {
-  //     listData.push(action.payload)
-  //     state.favorUrls.add(action.payload.url)
-  //   }
-  //   return {
-  //     ...state,
-  //     favorUrlMaps: listData,
-  //     favorUrls: state.favorUrls,
-  //   }
-  // }
-  // 删除收藏
-  // if (action.type === 'favor_reduce') {
-  //   const { url } = action.payload
-  //   state.favorUrls.delete(url)
-  //   return {
-  //     ...state,
-  //     favorUrlMaps: state.favorUrlMaps.filter(i => i.url !== url),
-  //     favorUrls: state.favorUrls,
-  //   }
-  // }
 
   // 获取到用户信息
   if (action.type === 'get_user') {
+    // console.error('获取到用户信息', action.payload)
     return {
       ...state,
       userInfo: Object.assign({}, state.userInfo, action.payload),
@@ -61,12 +32,11 @@ const reducers = (state = initState, action) => {
       isLogin: Boolean(action.payload?.mail) || false,
     }
   }
-  // 获取到用户信息
+  // 获取到登录窗口信息
   if (action.type === 'get_loginWindow') {
-    console.error('获取到用户信息', action.payload)
+    console.error('获取到登录窗口信息', action.payload)
     return {
       ...state,
-      aa: 2,
       loginWindowId: action.payload,
     }
   }

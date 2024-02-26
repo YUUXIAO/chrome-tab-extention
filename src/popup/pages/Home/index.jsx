@@ -1,7 +1,18 @@
 import './index.less'
-import { Tabs, Input, Dropdown, Collapse, Badge, Modal, Space, Switch, Button } from 'antd'
+import { Tabs, Input, Collapse, Badge, Button } from 'antd'
 import React from 'react'
-import { DeleteOutlined, StarOutlined, StarFilled, CloseOutlined } from '@ant-design/icons'
+import {
+  DeleteOutlined,
+  StarOutlined,
+  UserOutlined,
+  CopyOutlined,
+  FormOutlined,
+  MenuUnfoldOutlined,
+  ArrowsAltOutlined,
+  EyeOutlined,
+  StarFilled,
+  CaretRightOutlined,
+} from '@ant-design/icons'
 // import { mockWindowsData, mockTabsData } from '@/api/popup.js'
 import TabUtils from '@/extentionUtils/tabUtils.js'
 import { updateDomainData, deleteDomainData, fitlerRepeatTab, convertTabsData } from '@/utils'
@@ -11,56 +22,34 @@ import storageUtils from '@/extentionUtils/storage'
 
 import CreateNewWindow from '../components/createNewWindow'
 import TodoList from '../components/TodoList'
-import LoginPop from './LoginPop'
+// import LoginPop from './LoginPop'
 import UrlsGroupPop from '../components/urlsGroupPop'
 
 import Store from '@/store/index'
-import { hasToken, isExtentionEnv } from '@/utils.js'
+
+// import { hasToken, isExtentionEnv } from '@/utils.js'
+// import { VITE_BOOKMARKS_DIR_NAME } from import.meta.env
 
 const { Search } = Input
 // TODO 抽出一个类的实现
-
-// const operationBtns = [
-//   {
-//     key: 'expand',
-//     label: '铺开/收起域名',
-//     visible: true,
-//   },
-//   {
-//     key: 'combine',
-//     label: '窗口合并',
-//     visible: true,
-//   },
-//   {
-//     key: 'combine-tab',
-//     label: '合并相同tab',
-//     visible: true,
-//   },
-//   {
-//     key: 'todo',
-//     label: '记事本',
-//     visible: false,
-//   },
-//   {
-//     key: 'create-tag',
-//     label: '查看/创建网页组',
-//     visible: true,
-//   },
-//   {
-//     key: 'login',
-//     label: '登录/注册',
-//     visible: !hasToken(),
-//   },
-// ]
 
 class DomainOne extends React.Component {
   render() {
     const { tabData, favorUrls, domain, domainValues } = this.props
     return (
       <div key={tabData.id} className='tab-one domain-header flex-y-center flex-x-between' onClick={e => this.props.tabClick(e, tabData)}>
-        <div className='flex-x-start'>
-          <img alt='' className='domain-icon' src={tabData.favIconUrl || ''}></img>
-          {tabData.title}
+        <img
+          alt={tabData.title}
+          onError={e => {
+            e.target.onerror = null
+            e.target.src = ''
+          }}
+          className='domain-icon'
+          src={tabData.favIconUrl || ''}
+        ></img>
+        <div className='title content-info'>
+          <div className='app-oneline'>{tabData.title}</div>
+          <div className='sub-domain app-oneline'>{tabData.url}</div>
         </div>
         <div className='action flex-x-end'>
           {/* 收藏按钮 */}
@@ -81,6 +70,7 @@ class Home extends React.Component {
   constructor(props) {
     super(props)
     this.state = {
+      extentionDir: null,
       activeTab: '', // 当前活跃窗口ID
       windowTabs: [], // 所有窗口数据
       isShowTodo: false, // 是否打开记事本
@@ -94,37 +84,59 @@ class Home extends React.Component {
       operationBtns: [
         {
           key: 'expand',
+          icon: <ArrowsAltOutlined />,
           label: '铺开/收起域名',
           visible: true,
         },
         {
           key: 'combine',
+          icon: <CopyOutlined />,
           label: '窗口合并',
           visible: true,
         },
         {
           key: 'combine-tab',
+          icon: <MenuUnfoldOutlined />,
           label: '合并相同tab',
           visible: true,
         },
         {
           key: 'todo',
+          icon: <FormOutlined />,
           label: '记事本',
           visible: false,
         },
         {
           key: 'create-tag',
+          icon: <EyeOutlined />,
           label: '查看/创建网页组',
           visible: true,
         },
+        {
+          key: 'login',
+          icon: <UserOutlined />,
+          label: '登录/注册',
+          visible: false,
+        },
+        // {
+        //   key: 'select',
+        //   icon: <UserOutlined />,
+        //   label: '多选',
+        //   visible: true,
+        // },
       ],
     }
   }
 
-  componentDidMount() {
+  async componentDidMount() {
     this.getUserInfo()
     this.getAllWindows()
     this.getAllBookMarks()
+
+    chrome.runtime.sendMessage({ data: 'Handshake' }, function (response) {})
+    chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+      console.error('接受到消息了-----', request, sender)
+    })
 
     Store.subscribe(() => {
       this.setState({
@@ -133,17 +145,6 @@ class Home extends React.Component {
         collectUrls: Store.getState().user.collectUrls,
       })
     })
-    console.error(Store.getState().user.isLogin)
-    this.setState({
-      operationBtns: [
-        ...this.state.operationBtns,
-        {
-          key: 'login',
-          label: '登录/注册',
-          visible: !Store.getState().user.isLogin,
-        },
-      ],
-    })
 
     // console.error(111, this.state.favorUrlMaps)
     // console.error("popup页面获取background 的数据1-----")
@@ -151,8 +152,7 @@ class Home extends React.Component {
     // console.log(JSON.stringify(background))
   }
   // 获取到用户信息
-  getUserInfo = () => {
-    if (!hasToken()) return false
+  getUserInfo = async () => {
     getUserInfo()
       .then(res => {
         console.error('获取到用户信息', res)
@@ -161,13 +161,22 @@ class Home extends React.Component {
           payload: res.data,
         })
       })
-      .catch(err => {
+      .catch(async () => {
         const { operationBtns } = this.state
         operationBtns.forEach(btn => {
           if (btn.key === 'login') {
             btn.visible = true
           }
         })
+        const collectData = (await storageUtils.getStorageItem('collectData')) || []
+        if (collectData?.length) {
+          Store.dispatch({
+            type: 'get_user',
+            payload: {
+              collectUrls: collectData,
+            },
+          })
+        }
         this.setState({
           operationBtns,
         })
@@ -233,23 +242,44 @@ class Home extends React.Component {
   // 收藏tab
   onTabCollect = async (e, tab) => {
     e.stopPropagation()
-    const { isLogin, collectUrls } = this.state
+    const { isLogin, collectUrls, extentionDir, windowTabs, activeTab, currentWindowTab } = this.state
     const { url } = tab
     const hasFavor = collectUrls.includes(url)
     // 处理书签文件夹数据
     if (hasFavor) {
-      if (!isExtentionEnv()) {
-        const marketId = ''
-        bookMarksUtils.removeBookMarks(marketId) // 移除书签
+      if (extentionDir?.children?.length) {
+        const marketId = extentionDir.children.find(i => i.url === url)?.id || ''
+        marketId && bookMarksUtils.removeBookMarks(marketId) // 移除书签
       }
     } else {
-      const payload = {
+      // 创建书签
+      const curTabs = windowTabs.find(i => i.windowId === activeTab)?.tabs || []
+      const title = curTabs.find(i => i.url === url)?.title || ''
+      let bookmarks = {
         parentId: '1',
-        title: '拓展收藏',
+        title,
+        url,
       }
-      bookMarksUtils.createBookMarks(payload)
+      if (extentionDir) {
+        bookmarks.parentId = extentionDir.id
+        bookMarksUtils.createBookMarks(bookmarks).then(res => {
+          console.error('文件夹', res)
+        })
+      } else {
+        const payload = {
+          parentId: '1',
+          title: import.meta.env.VITE_BOOKMARKS_DIR_NAME,
+        }
+        bookMarksUtils.createBookMarks(payload).then(res => {
+          console.error('创建文件夹', res)
+          this.setState({
+            extentionDir,
+          })
+          bookmarks.parentId = res.id
+          bookMarksUtils.createBookMarks(bookmarks)
+        })
+      }
     }
-    console.error('islohon', isLogin, Store.getState().user.isLogin)
     if (isLogin) {
       const payload = {
         url,
@@ -264,9 +294,9 @@ class Home extends React.Component {
     } else {
       // 游客模式存本地
       const collectData = (await storageUtils.getStorageItem('collectData')) || []
-      console.error('11', collectData)
       if (hasFavor) {
-        collectData.delete(url)
+        const idx = collectData.indexOf(url)
+        collectData.splice(idx, 1)
       } else {
         collectData.push(url)
       }
@@ -274,7 +304,6 @@ class Home extends React.Component {
         type: 'set_collect',
         payload: collectData,
       })
-      console.error('collectData---', collectData)
       storageUtils.setStorageItem('collectData', collectData)
     }
   }
@@ -370,16 +399,13 @@ class Home extends React.Component {
         })
         break
       case 'create-tag':
-        this.openUrlsGroup()
-        // chrome.tabs.create({ url: 'background.html' })
-        // this.setState({
-        //   isShowUrlsGroup: true,
-        // })
+        this.setState({
+          isShowUrlsGroup: true,
+        })
         break
       case 'login':
         // this.openUrlsGroup()
         const { loginWindowId } = this.state
-        console.error('屏幕宽度', loginWindowId, window)
         if (loginWindowId) {
           TabUtils.toggleWindow(loginWindowId, { focus: true, drawAttention: true })
           return
@@ -388,18 +414,13 @@ class Home extends React.Component {
         const properties = { url: 'pages/login.html', left, top: 100, width: 300, height: 400, type: 'popup' }
         TabUtils.createNewWindow(properties, async window => {
           const loginWindowId = window.id
-          console.error(4, Store.getState().user)
-          const collectData = await storageUtils.getStorageItem('collectData')
-          console.error('collectData', collectData)
+          // const collectData = await storageUtils.getStorageItem('collectData')
+          // console.error('collectData', collectData)
           Store.dispatch({
             type: 'get_loginWindow',
             payload: loginWindowId,
           })
         })
-        // chrome.windows.create({ url: 'login.html', top: 20, width: 200, height: 400, type: 'popup' })
-        // this.setState({
-        //   isShowLogin: true,
-        // })
         break
 
       default:
@@ -433,7 +454,7 @@ class Home extends React.Component {
     }
   }
 
-  // 过滤当前窗口tab数据
+  // 合并所有窗口的tab
   // TODO 包含所有窗口
   windowTabCombine = () => {
     const { activeTab, windowTabs } = this.state
@@ -447,7 +468,7 @@ class Home extends React.Component {
 
   // 窗口合并
   windowsCombine = async () => {
-    const { windowTabs, activeTab } = this.state
+    const { windowTabs } = this.state
     const curWindowId = await TabUtils.getCurrentWindowId()
     // const allTabs = mockTabsData
     const otherWindowIds = windowTabs.filter(i => i.windowId !== curWindowId).map(i => i.windowId)
@@ -471,8 +492,6 @@ class Home extends React.Component {
       })
 
       otherWindowIds.map(i => TabUtils.deleteWindow(i)) // 删除其他窗口
-    } else {
-      alert('当前只有一个窗口，不能进行合并')
     }
     this.getAllWindows()
   }
@@ -486,27 +505,31 @@ class Home extends React.Component {
         payload: marksData,
       })
       // 查询是否有插件创建的收藏夹
-      const hasExtentionDir = marksData.find(i => i.title === import.meta.env.VITE_BOOKMARKS_DIR_NAME)
-      console.error('查询是否有插件创建的收藏夹名字', hasExtentionDir)
-      // const fn = function (marksData) {
-      //   for (let i = 0; i < marksData.length; i++) {
-      //     const mark = marksData[i]
-      //     if (mark?.children?.length) {
-      //       return fn(mark.children)
-      //     } else {
-      //       if (mark.title === import.meta.env.VITE_BOOKMARKS_DIR_NAME) {
-      //         return mark
-      //       }
-      //     }
-      //   }
-      // }
-      // console.error(1, JSON.stringify(fn(marksData)))
+      const hasExtentionDir = function (marksData) {
+        for (let i = 0; i < marksData.length; i++) {
+          const mark = marksData[i]
+          if (mark.title === import.meta.env.VITE_BOOKMARKS_DIR_NAME) {
+            return mark
+          } else if (mark?.children?.length) {
+            return hasExtentionDir(mark.children)
+          }
+        }
+      }
+      const result = hasExtentionDir(marksData)
+      if (result) {
+        this.setState({
+          extentionDir: result,
+        })
+      }
     })
   }
   // 获取所有tabs
   async getAllWindows() {
     const ajaxArray = [TabUtils.getAllWindow(), TabUtils.getTabLists(), TabUtils.getCurrentWindowId()]
     const [windows, allTabs, curWindowId] = await Promise.all(ajaxArray)
+
+    const windowNames = JSON.parse(await storageUtils.getStorageItem('windowName')) || {}
+    console.error('存在本地的窗口数据', windowNames, typeof windowNames)
 
     // const windowMap = {}
     const windowTabs = [] // 所有窗口数据
@@ -522,15 +545,17 @@ class Home extends React.Component {
 
       // TODO 处理无痕模式
       // TODO 当前窗口挪到第一位
-      const windowName = isActiveWindow ? `当前窗口` : `窗口-${winIdx}`
+      const windowName = isActiveWindow ? `当前窗口` : `其他窗口`
+      console.error(11, windowNames[String(parentId)], parentId)
       const windowInfo = {
         isActiveWindow: isActiveWindow,
-        name: windowName,
+        name: windowNames[String(parentId)] || windowName,
         windowId: parentId,
+        isEdit: false,
         icon: currentTabs[0].favIconUrl,
         tabs: currentTabs,
       }
-      // windowMap[parentId] = windowInfo
+      console.error('windowInfo', windowInfo)
       windowTabs.push(windowInfo)
     })
     const windowSortList = convertTabsData(activeWindowTabs) // sort按域名排序
@@ -544,6 +569,40 @@ class Home extends React.Component {
     // console.error('当前窗口tab数据---', windowSortList)
     // console.error("windowSortList", windowSortList)
   }
+  editWindow = (e, data) => {
+    e.stopPropagation()
+    const { windowTabs } = this.state
+    console.error('重命名功能', data, windowTabs)
+    windowTabs.forEach(win => {
+      if (win.windowId === data.windowId) {
+        win.isEdit = true
+      }
+    })
+    this.setState({
+      windowTabs,
+    })
+  }
+  // 修改窗口名称
+  updateWindowName = (e, wind) => {
+    const name = e?.target?.value?.trim() || ''
+    const { windowTabs } = this.state
+    const updateId = wind.windowId
+    windowTabs.forEach(async win => {
+      if (win.windowId === updateId) {
+        if (name) {
+          win.name = name
+          // 改名存本地，浏览器销毁清楚数据
+          const windowNames = JSON.parse(await storageUtils.getStorageItem('windowName')) || {}
+          windowNames[updateId] = name
+          storageUtils.setStorageItem('windowName', windowNames)
+        }
+        wind.isEdit = false
+      }
+    })
+    this.setState({
+      windowTabs,
+    })
+  }
   // 设置弹窗状态
   setPopVisible = (type, visible) => {
     this.setState({
@@ -551,7 +610,7 @@ class Home extends React.Component {
     })
   }
   render() {
-    const { windowTabs, isShowTodo, operationBtns, isShowUrlsGroup, isShowLogin, activeTab, expandkeys, collectUrls, currentWindowTab } = this.state
+    const { windowTabs, isShowTodo, operationBtns, isShowUrlsGroup, activeTab, expandkeys, collectUrls, currentWindowTab } = this.state
     return (
       <div className='home-wrapper'>
         {/* 搜索当前窗口 */}
@@ -565,7 +624,7 @@ class Home extends React.Component {
           .filter(btn => btn.visible)
           .map(btn => {
             return (
-              <Button key={btn.key} type='primary' size='small' className='combine-btn' onClick={() => this.onOperationClick(btn)}>
+              <Button key={btn.key} size='small' icon={btn.icon} className='combine-btn' onClick={() => this.onOperationClick(btn)}>
                 {btn.label}
               </Button>
             )
@@ -580,10 +639,26 @@ class Home extends React.Component {
             return {
               label: (
                 <div className='flex-x-start' key={index}>
-                  <span className='flex-x-start flex-y-center tab'>
-                    <i className={i.isActiveWindow ? 'dot' : ''}></i> {i.name}
-                  </span>
-                  <Badge size='small' color='#faad14' count={i.tabs.length}></Badge>
+                  {!i.isEdit ? (
+                    <span className='flex-x-start flex-y-center tab' onDoubleClick={e => this.editWindow(e, i)}>
+                      <i className={i.isActiveWindow ? 'dot' : ''}></i> {i.name}
+                    </span>
+                  ) : (
+                    <Input
+                      className='edit-input'
+                      placeholder={i.name}
+                      allowClear
+                      maxLength={5}
+                      key={i.windowId}
+                      onBlur={() => {
+                        this.updateWindowName({}, i)
+                      }}
+                      onPressEnter={e => {
+                        this.updateWindowName(e, i)
+                      }}
+                    />
+                  )}
+                  {!i.isEdit ? <Badge size='small' color='#ff3838' count={i.tabs.length}></Badge> : <></>}
                 </div>
               ),
               key: i.windowId,
@@ -592,56 +667,67 @@ class Home extends React.Component {
           onChange={this.onChange}
         ></Tabs>
         {/* 列表 */}
-        {Boolean(Object.entries(currentWindowTab)?.length) && (
-          <Collapse
-            activeKey={expandkeys}
-            onChange={this.collapseChange}
-            items={Object.entries(currentWindowTab).map(([domain, domainValues]) => {
-              const overTabOne = domainValues.tabs.length > 1
-              return {
-                key: domain,
-                collapsible: !overTabOne ? 'disabled' : 'header',
-                showArrow: overTabOne,
-                label: overTabOne ? (
-                  <div className='flex-x-between flex-y-center domain-header'>
-                    <div className='flex-x-start flex-y-center'>
-                      <img src={domainValues.tabs[0].favIconUrl} className='domain-icon' />
-                      {domain}
+        <div className='list-content'>
+          {Boolean(Object.entries(currentWindowTab)?.length) && (
+            <Collapse
+              activeKey={expandkeys}
+              expandIcon={() => <CaretRightOutlined />}
+              onChange={this.collapseChange}
+              items={Object.entries(currentWindowTab).map(([domain, domainValues]) => {
+                const overTabOne = domainValues.tabs.length > 1
+                return {
+                  key: domain,
+                  collapsible: !overTabOne ? 'disabled' : 'header',
+                  showArrow: overTabOne,
+                  label: overTabOne ? (
+                    <div className='flex-x-between flex-y-center collap-header domain-header'>
+                      <img
+                        src={domainValues.tabs[0].favIconUrl}
+                        onError={e => {
+                          e.target.onerror = null
+                          e.target.src = ''
+                        }}
+                        alt={domainValues.tabs[0].title}
+                        className='domain-icon'
+                      />
+                      <div className='title content-info flex flex-x-start flex-y-center'>
+                        {domain}({domainValues.tabs.length})
+                      </div>
+                      <DeleteOutlined className='domain-delete' onClick={e => this.onDomainTabDelete(e, domain, domainValues)} />
                     </div>
-                    <CloseOutlined className='domain-delete' onClick={e => this.onDomainTabDelete(e, domain, domainValues)} />
-                  </div>
-                ) : (
-                  <DomainOne
-                    tabData={domainValues.tabs[0]}
-                    favorUrls={collectUrls}
-                    domain={domain}
-                    domainValues={domainValues}
-                    onTabCollect={this.onTabCollect}
-                    tabClick={this.tabClick}
-                    onTabDelete={this.onTabDelete}
-                  ></DomainOne>
-                ),
-                children:
-                  domainValues.tabs.length > 1 &&
-                  domainValues.tabs.map((tab, tabIdx) => {
-                    return (
-                      <DomainOne
-                        tabData={tab}
-                        favorUrls={collectUrls}
-                        domain={domain}
-                        key={tabIdx}
-                        domainValues={domainValues}
-                        onTabCollect={this.onTabCollect}
-                        tabClick={this.tabClick}
-                        onTabDelete={this.onTabDelete}
-                      ></DomainOne>
-                    )
-                  }),
-              }
-              // ]
-            })}
-          />
-        )}
+                  ) : (
+                    <DomainOne
+                      tabData={domainValues.tabs[0]}
+                      favorUrls={collectUrls}
+                      domain={domain}
+                      domainValues={domainValues}
+                      onTabCollect={this.onTabCollect}
+                      tabClick={this.tabClick}
+                      onTabDelete={this.onTabDelete}
+                    ></DomainOne>
+                  ),
+                  children:
+                    domainValues.tabs.length > 1 &&
+                    domainValues.tabs.map((tab, tabIdx) => {
+                      return (
+                        <DomainOne
+                          tabData={tab}
+                          favorUrls={collectUrls}
+                          domain={domain}
+                          key={tabIdx}
+                          domainValues={domainValues}
+                          onTabCollect={this.onTabCollect}
+                          tabClick={this.tabClick}
+                          onTabDelete={this.onTabDelete}
+                        ></DomainOne>
+                      )
+                    }),
+                }
+                // ]
+              })}
+            />
+          )}
+        </div>
 
         {activeTab && String(activeTab).includes('templId') && <CreateNewWindow></CreateNewWindow>}
         {/* 记事本 */}

@@ -2,6 +2,7 @@ import React from 'react'
 import { Form, Button, Space, Modal, Alert, Input } from 'antd'
 import Store from '@/store/index'
 import storageUtils from '@/extentionUtils/storage'
+import tabUtils from '@/extentionUtils/tabUtils'
 
 import { userLogin, sendMail } from '@/api/user'
 
@@ -76,9 +77,9 @@ class LoginPop extends React.Component {
       data.collectUrls = collectData
     }
     userLogin(data)
-      .then(res => {
+      .then(async res => {
         console.error('登录成功', res)
-        this.props.setPopVisible('isShowLogin', false)
+        // this.props.setPopVisible('isShowLogin', false)
 
         const { token, userId } = res
         storageUtils.setStorageItem('token', token)
@@ -87,6 +88,9 @@ class LoginPop extends React.Component {
           storageUtils.removeStorageItem('collectData')
         }
 
+        // 关闭这个窗口
+        const currentWindowId = await tabUtils.getCurrentWindowId()
+        console.error('登录成功，需要关闭当年登录窗口', currentWindowId)
         // 保存用户信息到store
         Store.dispatch({
           type: 'get_user',
@@ -98,12 +102,12 @@ class LoginPop extends React.Component {
         })
       })
       .catch(err => {
-        console.error(err)
+        // console.error(err)
         this.setState({
           isShowMessage: true,
           errorMessage: err.data,
         })
-        this.props.setPopVisible('isShowLogin', false)
+        // this.props.setPopVisible('isShowLogin', false)
         // Message.error(err.data)
       })
   }

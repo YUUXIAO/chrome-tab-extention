@@ -1,4 +1,6 @@
 // import TabUtils from '@/extentionUtils/tabUtils.js'
+import storageUtils from '@/extentionUtils/storage.js'
+import messgaeUtils from './message.js'
 
 // // 获取当前窗口所有数据
 // const getAllWindows = async () => {
@@ -49,27 +51,53 @@
 
 // backFun()
 
+function addlater(info, tab) {
+  console.error('添加到稍后再看', info, tab)
+}
+// 安装了此拓展程序的配置文件首次启动时触发，初始化扩展,一般使用此事件设置状态或一次性初始化
+chrome.runtime.onInstalled.addListener(function () {
+  console.error('安装了此拓展程序的配置文件首次启动时触发，初始化扩展')
+  chrome.contextMenus.create({
+    id: 'tabs_extention_save',
+    title: '当前网址加入收藏',
+    type: 'normal',
+    contexts: ['all'],
+  })
+
+  chrome.contextMenus.create({
+    id: 'tabs_extention_later',
+    title: '添加到稍后再看',
+    type: 'normal',
+    contexts: ['selection'],
+  })
+  chrome.contextMenus.onClicked.addListener((menuInfo, tabInfo) => {
+    console.error('右键点击事件', JSON.stringify(menuInfo), JSON.stringify(tabInfo))
+    messgaeUtils.sendMessageToContentScript('hello,我是messga', res => {
+      console.error('收到消息回复', res)
+    })
+  })
+})
+
 // 浏览器打开事件
 chrome.runtime.onStartup.addListener(function () {
   console.error('浏览器打开事件---初始化插件')
 })
 
-// tab 跟新
-chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
-  if (changeInfo.status === 'complete' && tab.active) {
-    console.error('插件被启动后，就进入了运行阶段')
+// 每个tab更新事件
+// chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
+//   if (changeInfo.status === 'complete' && tab.active) {
+//     console.error('每个tab更新事件')
 
-    // TabUtils.getAllWindow().then(res => {
-    //   console.error('11', res)
-    // })
-    // chrome.history.search({ text: '' }, val => {
-    //   console.error('获取搜索历史记录', val)
-    // })
-  }
-})
+//     // TabUtils.getAllWindow().then(res => {
+//     //   console.error('11', res)
+//     // })
+//     // chrome.history.search({ text: '' }, val => {
+//     //   console.error('获取搜索历史记录', val)
+//     // })
+//   }
+// })
 
 // 关闭浏览器
 chrome.runtime.onSuspend.addListener(function () {
-  alert('Browser is about to close, save plugin data.')
-  console.error('Browser is about to close, save plugin data.')
+  storageUtils.removeStorageItem('windowName')
 })

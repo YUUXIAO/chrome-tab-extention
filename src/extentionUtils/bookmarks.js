@@ -176,7 +176,7 @@ const allbookmarks = [
 export const getAllBookMarks = () => {
   return new Promise(resolve => {
     if (isExtentionEnv()) {
-      chrome.bookmarks.getTree(function (bookmarkTreeNode) {
+      return chrome.bookmarks.getTree(function (bookmarkTreeNode) {
         resolve(bookmarkTreeNode)
       })
     } else {
@@ -188,25 +188,28 @@ export const getAllBookMarks = () => {
 // 创建书签
 export const createBookMarks = bookmark => {
   if (isExtentionEnv()) {
-    chrome.bookmarks.create(bookmark, result => {
-      console.error('创建书签', result)
-    })
+    return chrome.bookmarks.create(bookmark)
   }
 }
 
 // 移除书签
 export const removeBookMarks = id => {
   if (isExtentionEnv()) {
-    chrome.bookmarks.remove(id, result => {
-      console.error('移除书签成功', result)
-    })
+    return chrome.bookmarks.remove(id)
   }
 }
 
+// 更新书签
+export const updateBookMarks = (id, object) => {
+  if (isExtentionEnv()) {
+    return chrome.bookmarks.update(id, object)
+  }
+}
 const bookMarksUtils = {
   getAllBookMarks,
   createBookMarks,
   removeBookMarks,
+  updateBookMarks,
 }
 
 export default bookMarksUtils
