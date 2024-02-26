@@ -1,1 +1,0 @@
-"use strict";chrome.runtime.onStartup.addListener(function(){console.error("浏览器打开事件---初始化插件")});chrome.tabs.onUpdated.addListener(function(t,e,o){e.status==="complete"&&o.active&&console.error("插件被启动后，就进入了运行阶段")});chrome.runtime.onSuspend.addListener(function(){alert("Browser is about to close, save plugin data."),console.error("Browser is about to close, save plugin data.")});
