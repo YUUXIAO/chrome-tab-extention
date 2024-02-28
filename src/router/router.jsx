@@ -4,6 +4,7 @@ import TodoList from '@/popup/pages/components/TodoList'
 import Entry from '@/popup/pages/Entry'
 import Contnet from '@/content/index.jsx'
 import LaterPage from '@/popup/pages/LaterPage'
+import UrlsGroupPage from '@/popup/pages/UrlsGroupPage'
 // import ContentHome from "@/content/index"
 
 const routerConfigs = createHashRouter([
@@ -19,6 +20,11 @@ const routerConfigs = createHashRouter([
         path: 'later',
         name: '稍后再看',
         element: <LaterPage />,
+      },
+      {
+        path: 'urlGroup',
+        name: '网页组',
+        element: <UrlsGroupPage />,
       },
     ],
   },

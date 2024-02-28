@@ -5,12 +5,12 @@ import './entry.less'
 
 const pageNames = {
   '/popup/later': '稍后再看',
+  '/popup/urlGroup': '网页组',
 }
 
 function Entry() {
   const location = useLocation()
   const navigator = useNavigate()
-  console.error('入口文件', navigator)
 
   const pageBack = () => {
     navigator('/')

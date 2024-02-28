@@ -4,6 +4,8 @@ import React, { useEffect, useState } from 'react'
 import { Avatar, Button, List, Skeleton } from 'antd'
 import { CheckCircleOutlined, CheckCircleFilled, CloseCircleFilled, CloseCircleOutlined } from '@ant-design/icons'
 import { getLater, updateLater, deleteLater } from '@/api/user'
+import { getUpdateTime } from '@/utils'
+
 import './latePage.less'
 
 const LaterPage = props => {
@@ -45,10 +47,8 @@ const LaterPage = props => {
       y = now.getFullYear(),
       m = now.getMonth() + 1,
       d = now.getDate()
-    const h = now.toTimeString().substr(0, 2)
-    const halfday = h > 12 ? (h === 24 ? '上午' : '下午') : '上午'
 
-    return `${y}/${m}/${d} ${halfday}${h > 12 ? h - 12 : h}${now.toTimeString().substr(2, 3)}`
+    return `${y}/${m}/${d} ${now.toTimeString().substr(0, 5)}`
   }
 
   return (
@@ -75,7 +75,9 @@ const LaterPage = props => {
               avatar={<Avatar src={item.favIconUrl || ''} />}
               title={
                 <div className='info'>
-                  <div className='time'>{dealTime(item.createTime)}</div>
+                  <div className='time'>
+                    {dealTime(item.createTime)} {getUpdateTime(item.createTime)}
+                  </div>
                   <div className='title'>{item.pageTitle}</div>
                 </div>
               }

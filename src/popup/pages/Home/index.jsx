@@ -25,7 +25,7 @@ import storageUtils from '@/extentionUtils/storage'
 import CreateNewWindow from '../components/createNewWindow'
 import TodoList from '../components/TodoList'
 // import LoginPop from './LoginPop'
-import UrlsGroupPop from '../components/urlsGroupPop'
+// import urlsGroupPage from '../components/urlsGroupPage'
 
 import Store from '@/store/index'
 
@@ -80,8 +80,8 @@ class Home extends React.Component {
       activeTab: '', // 当前活跃窗口ID
       windowTabs: [], // 所有窗口数据
       isShowTodo: false, // 是否打开记事本
-      isShowUrlsGroup: false, // 设置网页组
-      isShowLogin: false,
+      // isShowUrlsGroup: false, // 设置网页组
+      // isShowLogin: false,
       currentWindowTab: [],
       expandkeys: [],
       isShowLater: false,
@@ -140,10 +140,10 @@ class Home extends React.Component {
     this.getAllWindows()
     this.getAllBookMarks()
 
-    chrome.runtime.sendMessage({ data: 'Handshake' }, function (response) {})
-    chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-      console.error('接受到消息了-----', request, sender)
-    })
+    // chrome.runtime.sendMessage({ data: 'Handshake' }, function (response) {})
+    // chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+    //   console.error('接受到消息了-----', request, sender)
+    // })
 
     Store.subscribe(() => {
       this.setState({
@@ -406,9 +406,10 @@ class Home extends React.Component {
         })
         break
       case 'create-tag':
-        this.setState({
-          isShowUrlsGroup: true,
-        })
+        // this.setState({
+        //   isShowUrlsGroup: true,
+        // })
+        this.props.navigate('/popup/urlGroup')
         break
       case 'later':
         this.props.navigate('/popup/later')
@@ -514,6 +515,7 @@ class Home extends React.Component {
         type: 'get_bookmarks',
         payload: marksData,
       })
+      console.error('用户所有的收藏', marksData)
       // 查询是否有插件创建的收藏夹
       const hasExtentionDir = function (marksData) {
         for (let i = 0; i < marksData.length; i++) {
@@ -620,7 +622,7 @@ class Home extends React.Component {
     })
   }
   render() {
-    const { windowTabs, isShowTodo, operationBtns, isShowLater, isShowUrlsGroup, activeTab, expandkeys, collectUrls, currentWindowTab } = this.state
+    const { windowTabs, isShowTodo, operationBtns, isShowLater, activeTab, expandkeys, collectUrls, currentWindowTab } = this.state
     return (
       <div className='home-wrapper'>
         {/* 搜索当前窗口 */}
@@ -742,7 +744,7 @@ class Home extends React.Component {
         {activeTab && String(activeTab).includes('templId') && <CreateNewWindow></CreateNewWindow>}
         {/* 记事本 */}
         {isShowTodo && <TodoList></TodoList>}
-        {isShowUrlsGroup && <UrlsGroupPop open={isShowUrlsGroup} setPopVisible={this.setPopVisible}></UrlsGroupPop>}
+        {/* {isShowUrlsGroup && <urlsGroupPage open={isShowUrlsGroup} setPopVisible={this.setPopVisible}></urlsGroupPage>} */}
         {/* {isShowLater && <laterList></laterList>} */}
         {/* {isShowLogin && <LoginPop open={isShowLogin} setPopVisible={this.setPopVisible}></LoginPop>} */}
       </div>

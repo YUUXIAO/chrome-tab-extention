@@ -1,10 +1,12 @@
 import React from 'react'
-import { Form, Button, Modal, Checkbox, Tag, Space, Alert, Input, Cascader } from 'antd'
+import { Form, Button, Modal, Checkbox, Tabs, List, Tag, Space, Alert, Input, Cascader } from 'antd'
 
 import Store from '@/store/index'
 import TabUtils from '@/extentionUtils/tabUtils.js'
 import { createUrlTag, getUrlTags } from '@/api/user'
-import { FastBackwardFilled } from '@ant-design/icons'
+import { FastBackwardFilled, CopyOutlined, PlusOutlined } from '@ant-design/icons'
+
+import './urlsGroupPage.less'
 
 class CreateModal extends React.Component {
   formRef = React.createRef()
@@ -20,7 +22,9 @@ class CreateModal extends React.Component {
       favorUrlMaps: Store.getState().user.allBookmarks, // 书签收藏
     }
   }
-  componentDidMount() {}
+  // componentDidMount() {
+  //   console.error('书签收藏', Store.getState().user)
+  // }
 
   // 获取快捷链接
   changeFiled1 = (filed, value, options) => {
@@ -38,6 +42,7 @@ class CreateModal extends React.Component {
     } else {
       // 收藏
       if (filed === 'collect') {
+        console.error(options)
         formData[filed] = options.map(opt => {
           const val = opt[opt.length - 1]
           return {
@@ -78,7 +83,8 @@ class CreateModal extends React.Component {
     }
     createUrlTag(params)
       .then(res => {
-        alert('存网址标签成功')
+        // alert('存网址标签成功')
+        this.props.initpage()
       })
       .catch(err => {
         this.setState({
@@ -111,7 +117,6 @@ class CreateModal extends React.Component {
             <Form.Item label='名称' name='name' rules={[{ required: true, message: '请输入名称' }]}>
               <Input placeholder='请输入名称' type='text' onChange={e => this.changeFiled1('name', e.target.value)} />
             </Form.Item>
-            {this.state.enterurls}
             {enterurls.map((url, idx) => {
               return (
                 <Form.Item label='域名' key={idx}>
@@ -142,7 +147,6 @@ class CreateModal extends React.Component {
                 options={favorUrlMaps}
                 mode='multiple'
               />
-              {/* dropdownMenuColumnStyle={{ width: '400px' }} */}
             </Form.Item>
             <Form.Item className='flex-x-center'>
               <Button size='large' type='primary' onClick={this.createNewTag}>
@@ -156,15 +160,17 @@ class CreateModal extends React.Component {
   }
 }
 
-class UrlsGroupPop extends React.Component {
+class UrlsGroupPage extends React.Component {
   formRef = React.createRef()
   constructor(props) {
     super(props)
     this.state = {
       allUrlTags: [],
+      activeTag: '',
       isShowCheckbox: false,
       isShowCreate: false,
       openIds: [],
+      currentTagUrls: [],
     }
   }
   componentDidMount() {
@@ -177,6 +183,8 @@ class UrlsGroupPop extends React.Component {
       const allUrlTags = res?.data || []
       this.setState({
         allUrlTags,
+        activeTag: allUrlTags[0]?._id || '',
+        currentTagUrls: allUrlTags[0]?.urls || [],
       })
     })
   }
@@ -184,6 +192,14 @@ class UrlsGroupPop extends React.Component {
   showCreateModal = visible => {
     this.setState({
       isShowCreate: visible,
+    })
+  }
+  tabChange = val => {
+    const { allUrlTags } = this.state
+    const current = allUrlTags.find(i => i._id === val)
+    this.setState({
+      activeTag: val,
+      currentTagUrls: current?.urls || [],
     })
   }
   openTag = visible => {
@@ -225,71 +241,107 @@ class UrlsGroupPop extends React.Component {
     const createData = {
       url: createUrls,
     }
-    console.error('需要创建的URLs', createUrls)
     TabUtils.createNewWindow(createData, function (data) {
       console.error('创建成功', data)
     })
   }
 
   render() {
-    const { isShowCreate, allUrlTags, isShowCheckbox } = this.state
+    const { isShowCreate, currentTagUrls, activeTag, allUrlTags, isShowCheckbox } = this.state
     const colors = ['red', 'volcano', 'orange', 'gold', 'lime', 'green', 'cyan']
     return (
       <div>
-        <Modal
+        {/* <Modal
           footer={null}
           title='创建网页组'
           centered
           width={600}
           open={this.props.open}
           onCancel={() => this.props.setPopVisible('isShowUrlsGroup', false)}
-        >
-          <div className='create-window-wrapper'>
-            <div className='mt10 mb10'>
-              <Button type='primary' onClick={() => this.showCreateModal(true)}>
-                创建标签组
-              </Button>
-              <Button type='primary' onClick={() => this.openTag(true)} className='ml10'>
+        > */}
+        <div className='create-window-wrapper'>
+          <div className=''>
+            <Button icon={<PlusOutlined />} className='operation-btn' onClick={() => this.showCreateModal(true)}>
+              创建标签组
+            </Button>
+            {!isShowCheckbox && (
+              <Button className='operation-btn ml10' icon={<CopyOutlined />} onClick={() => this.openTag(true)}>
                 批量打开标签组
               </Button>
-              {isShowCheckbox && (
-                <Button type='error' onClick={() => this.openTag(false)}>
-                  取消
-                </Button>
-              )}
-              {isShowCheckbox && (
-                <Button type='primary' onClick={this.confirmOpen}>
-                  确定
-                </Button>
-              )}
-            </div>
-            <Space size={[0, 8]} wrap>
-              {allUrlTags.map((item, index) => {
-                return (
+            )}
+            {isShowCheckbox && (
+              <Button size='small' className='opt-btn' onClick={() => this.openTag(false)}>
+                取消
+              </Button>
+            )}
+            {isShowCheckbox && (
+              <Button size='small' className='opt-btn ml10' onClick={this.confirmOpen}>
+                确定
+              </Button>
+            )}
+          </div>
+          <Tabs
+            items={allUrlTags.map((item, index) => {
+              return {
+                label: (
                   <div>
                     {isShowCheckbox && (
-                      <Checkbox size='small' className='mr10' key={item._id} onChange={e => this.checkboxChange(e, item)}>
-                        <Tag className='pointer' key={index} color={colors[index % 7]}>
-                          {item.name}
-                        </Tag>
-                      </Checkbox>
+                      <Checkbox size='small' className='mr10' key={item._id} onChange={e => this.checkboxChange(e, item)}></Checkbox>
                     )}
-                    {!isShowCheckbox && (
-                      <Tag className='pointer' key={item._id} color={colors[index % 7]}>
+                    {item.name}
+                  </div>
+                ),
+                key: item._id,
+              }
+            })}
+            activeKey={activeTag}
+            onChange={this.tabChange}
+          />
+          <List
+            dataSource={currentTagUrls}
+            renderItem={item => (
+              <List.Item className='url-one'>
+                {/* <div className='flex-x-start title'>{item.title}</div>
+                <div className='url'>{item.url}</div> */}
+                <List.Item.Meta
+                  // avatar={<Avatar src={`https://api.dicebear.com/7.x/miniavs/svg?seed=${index}`} />}
+                  title={<div className='title app-oneline'>{item?.title || item}</div>}
+                  description={<div className='url app-oneline'>{item?.url || '手动添加网址'}</div>}
+                />
+              </List.Item>
+            )}
+          />
+          {/* <Space size={[0, 8]} wrap>
+            {allUrlTags.map((item, index) => {
+              return (
+                <div>
+                  {isShowCheckbox && (
+                    <Checkbox size='small' className='mr10' key={item._id} onChange={e => this.checkboxChange(e, item)}>
+                      <Tag className='pointer' key={index} color={colors[index % 7]}>
                         {item.name}
                       </Tag>
-                    )}
-                  </div>
-                )
-              })}
-            </Space>
-          </div>
-        </Modal>
+                    </Checkbox>
+                  )}
+                  {!isShowCheckbox && (
+                    <Tag className='pointer' key={item._id} color={colors[index % 7]}>
+                      {item.name}
+                    </Tag>
+                  )}
+                </div>
+              )
+            })}
+          </Space> */}
+        </div>
+        {/* </Modal> */}
         {/* 创建标签组 */}
-        {isShowCreate && <CreateModal open={isShowCreate} cancel={() => this.showCreateModal(FastBackwardFilled)}></CreateModal>}
+        {isShowCreate && (
+          <CreateModal open={isShowCreate} cancel={() => this.showCreateModal(FastBackwardFilled)} initpage={this.getUserGroups}>
+            {' '}
+          </CreateModal>
+        )}
       </div>
     )
   }
 }
 
-export default UrlsGroupPop
+export default UrlsGroupPage
