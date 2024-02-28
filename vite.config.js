@@ -8,7 +8,6 @@ dotenv.config()
 // TODO 报错了，先注释
 // import { createStyleImportPlugin, AntdResolve } from "vite-plugin-style-import"
 
-console.error('打包index--- ', process.env.TEMP_BACKGROUND_DIR)
 export default defineConfig({
   plugins: [
     react(),

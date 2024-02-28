@@ -1,10 +1,12 @@
-import { get, post } from './http'
+import axios from 'axios'
+import { get, post, put } from './http'
 const _API = {
   login: '/login',
   createTag: '/createTag', // 创建标签
   sendMail: '/sendMail',
   favor: '/favor',
   userInfo: '/userinfo',
+  later: '/later',
 }
 
 export const userLogin = payload => {
@@ -25,6 +27,21 @@ export const getUserInfo = payload => {
 // 收藏/取消收藏网址
 export const urlCollect = payload => {
   return get(_API.favor, payload)
+}
+
+// 稍后再看
+export const getLater = () => {
+  return get(_API.later)
+}
+export const setLater = payload => {
+  return post(_API.later, payload)
+}
+
+export const updateLater = payload => {
+  return put(_API.later, payload)
+}
+export const deleteLater = payload => {
+  return axios.delete(_API.later, { params: payload })
 }
 
 // 获取用户标签

@@ -1,6 +1,6 @@
 {
-  "short_name": "Chrome窗口插件V3",
-  "name": "tab_manage_extension",
+  "short_name": "标签管理器",
+  "name": "TabsManager",
   "version": "1.0",
   "manifest_version": 3,
   "content_scripts": [
@@ -11,7 +11,7 @@
       "run_at": "document_end"
     }
   ],
-  "permissions": ["storage", "runtime", "contextMenus", "tabs", "background", "bookmarks"],
+  "permissions": ["storage", "contextMenus", "tabs", "background", "bookmarks"],
   "action": {
     "default_popup": "index.html",
     "default_icon": {

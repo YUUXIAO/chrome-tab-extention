@@ -8,6 +8,8 @@ This project was bootstrapped with [Create React App](https://github.com/faceboo
 
 ### 记事本 && 云同步
 
+### 稍时长统计
+
 ### 稍后再看（关闭tab||window，显示浮窗）
 
 - [ ] 当前窗口新建空白 tab,显示所有该窗口的 tablist
@@ -16,15 +18,15 @@ This project was bootstrapped with [Create React App](https://github.com/faceboo
 - [x] 合并所有窗口域名
 
 - [ ] antDesign 按需引入,vite加载慢
-- [ ] 绑定谷歌账号
+- [ ] 绑定谷歌账号 || outh2登录（chrome.identity）
 
-- [ ] build 通过脚本处理解开chrome相关api，注释mock数据
+- [x] build 通过脚本处理解开chrome相关api，注释mock数据，通过判断浏览器环境区分api
 
 - [ ] 1、选择历史链接快捷选中
-- [ ] 2、一键批量打开【收藏、标签】
+- [x] 2、一键批量打开【收藏、标签】
 - [ ] 3、快捷恢复（注入页面icon）
-- [ ] 网站收藏同步操作chrome书签
-- [ ] chrome.identity
+- [x] 网站收藏同步操作chrome书签
+- [x] 网页时长统计
 
 ## Available Scripts
 

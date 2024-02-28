@@ -88,3 +88,16 @@ export function post(url, params) {
       })
   })
 }
+
+export function put(url, params) {
+  return new Promise((resolve, reject) => {
+    axios
+      .put(url, params)
+      .then(res => {
+        resolve(res.data)
+      })
+      .catch(err => {
+        reject(err)
+      })
+  })
+}

@@ -1,6 +1,7 @@
 // import TabUtils from '@/extentionUtils/tabUtils.js'
 import storageUtils from '@/extentionUtils/storage.js'
-import messgaeUtils from './message.js'
+// import messgaeUtils from './message.js'
+import { fetchPost, fetchGet } from './fetch.js'
 
 // // 获取当前窗口所有数据
 // const getAllWindows = async () => {
@@ -51,9 +52,37 @@ import messgaeUtils from './message.js'
 
 // backFun()
 
-function addlater(info, tab) {
-  console.error('添加到稍后再看', info, tab)
+const a = {
+  editable: false,
+  frameId: 0,
+  frameUrl: 'https://ant-design.antgroup.com/components/list-cn',
+  menuItemId: 'tabs_extention_later',
+  pageUrl: 'https://ant-design.antgroup.com/components/list-cn',
+  selectionText: 'background',
 }
+const b = {
+  active: true,
+  audible: false,
+  autoDiscardable: true,
+  discarded: false,
+  favIconUrl: 'https://gw.alipayobjects.com/zos/rmsportal/rlpTLlbMzTNYuZGGCVYM.png',
+  groupId: -1,
+  height: 747,
+  highlighted: true,
+  id: 954676296,
+  incognito: false,
+  index: 4,
+  lastAccessed: 1709046192454.432,
+  mutedInfo: { muted: false },
+  pinned: false,
+  selected: true,
+  status: 'complete',
+  title: '列表 List - Ant Design',
+  url: 'https://ant-design.antgroup.com/components/list-cn',
+  width: 1075,
+  windowId: 954676142,
+}
+
 // 安装了此拓展程序的配置文件首次启动时触发，初始化扩展,一般使用此事件设置状态或一次性初始化
 chrome.runtime.onInstalled.addListener(function () {
   console.error('安装了此拓展程序的配置文件首次启动时触发，初始化扩展')
@@ -70,11 +99,51 @@ chrome.runtime.onInstalled.addListener(function () {
     type: 'normal',
     contexts: ['selection'],
   })
-  chrome.contextMenus.onClicked.addListener((menuInfo, tabInfo) => {
+  chrome.contextMenus.onClicked.addListener(async (menuInfo, tabInfo) => {
     console.error('右键点击事件', JSON.stringify(menuInfo), JSON.stringify(tabInfo))
-    messgaeUtils.sendMessageToContentScript('hello,我是messga', res => {
-      console.error('收到消息回复', res)
-    })
+    const token = await storageUtils.getStorageItem('token')
+    const { menuItemId, pageUrl, selectionText } = menuInfo
+    switch (menuItemId) {
+      // TODO 可以把收藏和稍后封装一起
+      case 'tabs_extention_save': // 收藏网址
+        if (token) {
+          const url = `/favor?url=${pageUrl}`
+          fetchGet(url).then(res => {
+            console.error('添加收藏传参', res)
+          })
+        } else {
+          // 未登录，存本地
+          const collectData = (await storageUtils.getStorageItem('collectData')) || []
+          collectData.push(collectData)
+          storageUtils.setStorageItem('collectData', collectData)
+        }
+        break
+      case 'tabs_extention_later': // 稍后再看
+        const payload = {
+          pageUrl,
+          pageTitle: tabInfo.title,
+          favIconUrl: tabInfo.favIconUrl,
+          selection: selectionText,
+        }
+        if (token) {
+          fetchPost('/later', token, payload).then(res => {
+            console.error('添加稍后再看成功', res)
+          })
+        } else {
+          // 未登录，存本地
+          const laterData = (await storageUtils.getStorageItem('laterData')) || []
+          payload.createTime = Date.now()
+          laterData.push(payload)
+          storageUtils.setStorageItem('laterData', laterData)
+        }
+
+        break
+      default:
+        break
+    }
+    // messgaeUtils.sendMessageToContentScript('hello,我是messga', res => {
+    //   console.error('收到消息回复', res)
+    // })
   })
 })
 
@@ -82,6 +151,44 @@ chrome.runtime.onInstalled.addListener(function () {
 chrome.runtime.onStartup.addListener(function () {
   console.error('浏览器打开事件---初始化插件')
 })
+
+// chrome.tabs.onCreated.addListener(function (tab) {
+//   console.log(tab)
+// })
+
+// chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
+//   console.log('Tab2222 ' + tabId + ' has been changed with these options:')
+//   console.log(changeInfo)
+// })
+
+// chrome.tabs.onMoved.addListener(function (tabId, moveInfo) {
+//   console.log('Tab ' + tabId + ' has been moved:')
+//   console.log(moveInfo)
+// })
+
+// chrome.tabs.onActivated.addListener(function (activeInfo) {
+//   console.log('Tab ' + activeInfo.tabId + ' in window ' + activeInfo.windowId + ' is active now.')
+// })
+
+// chrome.tabs.onHighlighted.addListener(function (highlightInfo) {
+//   console.log('Tab ' + 1 + ' in window ' + 1 + ' is highlighted now.')
+// })
+
+// chrome.tabs.onDetached.addListener(function (tabId, detachInfo) {
+//   console.log('Tab ' + tabId + ' in window ' + detachInfo.oldWindowId + ' at position ' + detachInfo.oldPosition + ' has been detached.')
+// })
+
+// chrome.tabs.onAttached.addListener(function (tabId, attachInfo) {
+//   console.log('Tab ' + tabId + ' has been attached to window ' + 2 + ' at position ' + 2 + ' .')
+// })
+
+// chrome.tabs.onRemoved.addListener(function (tabId, removeInfo) {
+//   console.log('Tab ' + tabId + ' in window ' + removeInfo.windowId + ', and the window is ' + (removeInfo.isWindowClosing ? 'closed.' : 'open.'))
+// })
+
+// chrome.tabs.onReplaced.addListener(function (addedTabId, removedTabId) {
+//   console.log('Tab ' + removedTabId + ' has been replaced by tab ' + addedTabId + '.')
+// })
 
 // 每个tab更新事件
 // chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {

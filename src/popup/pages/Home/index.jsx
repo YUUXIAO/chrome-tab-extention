@@ -1,9 +1,11 @@
 import './index.less'
 import { Tabs, Input, Collapse, Badge, Button } from 'antd'
+import { useNavigate } from 'react-router-dom'
 import React from 'react'
 import {
   DeleteOutlined,
   StarOutlined,
+  FieldTimeOutlined,
   UserOutlined,
   CopyOutlined,
   FormOutlined,
@@ -32,6 +34,10 @@ import Store from '@/store/index'
 
 const { Search } = Input
 // TODO 抽出一个类的实现
+
+export const withNavigation = Component => {
+  return props => <Component {...props} navigate={useNavigate()} />
+}
 
 class DomainOne extends React.Component {
   render() {
@@ -78,6 +84,7 @@ class Home extends React.Component {
       isShowLogin: false,
       currentWindowTab: [],
       expandkeys: [],
+      isShowLater: false,
       loginWindowId: Store.getState().user.loginWindowId,
       isLogin: Store.getState().user.isLogin,
       collectUrls: Store.getState().user.collectUrls, //收藏信息
@@ -118,12 +125,12 @@ class Home extends React.Component {
           label: '登录/注册',
           visible: false,
         },
-        // {
-        //   key: 'select',
-        //   icon: <UserOutlined />,
-        //   label: '多选',
-        //   visible: true,
-        // },
+        {
+          key: 'later',
+          icon: <FieldTimeOutlined />,
+          label: '稍后再看',
+          visible: true,
+        },
       ],
     }
   }
@@ -403,6 +410,9 @@ class Home extends React.Component {
           isShowUrlsGroup: true,
         })
         break
+      case 'later':
+        this.props.navigate('/popup/later')
+        break
       case 'login':
         // this.openUrlsGroup()
         const { loginWindowId } = this.state
@@ -610,7 +620,7 @@ class Home extends React.Component {
     })
   }
   render() {
-    const { windowTabs, isShowTodo, operationBtns, isShowUrlsGroup, activeTab, expandkeys, collectUrls, currentWindowTab } = this.state
+    const { windowTabs, isShowTodo, operationBtns, isShowLater, isShowUrlsGroup, activeTab, expandkeys, collectUrls, currentWindowTab } = this.state
     return (
       <div className='home-wrapper'>
         {/* 搜索当前窗口 */}
@@ -733,10 +743,11 @@ class Home extends React.Component {
         {/* 记事本 */}
         {isShowTodo && <TodoList></TodoList>}
         {isShowUrlsGroup && <UrlsGroupPop open={isShowUrlsGroup} setPopVisible={this.setPopVisible}></UrlsGroupPop>}
+        {/* {isShowLater && <laterList></laterList>} */}
         {/* {isShowLogin && <LoginPop open={isShowLogin} setPopVisible={this.setPopVisible}></LoginPop>} */}
       </div>
     )
   }
 }
 
-export default Home
+export default withNavigation(Home)

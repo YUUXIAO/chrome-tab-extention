@@ -1,7 +1,8 @@
+import TabUtils from '@/extentionUtils/tabUtils.js'
+
 const sendMessageToContentScript = function (message, callback) {
-  chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-    console.error('----', tabs[0].id, message)
-    chrome.tabs.sendMessage(tabs[0].id, message, function (response) {
+  TabUtils.getCurrentTab().then(tab => {
+    chrome.tabs.sendMessage(tab.id, message, function (response) {
       if (callback) callback(response)
     })
   })

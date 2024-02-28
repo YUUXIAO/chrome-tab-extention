@@ -66,7 +66,9 @@ class LoginPop extends React.Component {
 
     const { email, code } = this.state.formData
     const collectData = (await storageUtils.getStorageItem('collectData')) || []
-    console.error('collectData', collectData)
+    const laterData = (await storageUtils.getStorageItem('laterData')) || []
+    // laterData.push(payload)
+    // storageUtils.setStorageItem('laterData', laterData)
     await this.formRef.current.validateFields()
     const data = {
       mail: email,
@@ -75,6 +77,9 @@ class LoginPop extends React.Component {
     }
     if (collectData?.length) {
       data.collectUrls = collectData
+    }
+    if (laterData?.length) {
+      data.laterData = laterData
     }
     userLogin(data)
       .then(async res => {
@@ -86,6 +91,9 @@ class LoginPop extends React.Component {
 
         if (collectData?.length) {
           storageUtils.removeStorageItem('collectData')
+        }
+        if (laterData?.length) {
+          storageUtils.removeStorageItem('laterData')
         }
 
         // 关闭这个窗口
