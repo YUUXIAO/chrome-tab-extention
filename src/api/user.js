@@ -7,6 +7,7 @@ const _API = {
   favor: '/favor',
   userInfo: '/userinfo',
   later: '/later',
+  todoKeys: '/todoKeys',
 }
 
 export const userLogin = payload => {
@@ -44,6 +45,20 @@ export const deleteLater = payload => {
   return axios.delete(_API.later, { params: payload })
 }
 
+// 稍后再看
+export const getTodoKeys = () => {
+  return get(_API.todoKeys)
+}
+export const setTodoKeys = payload => {
+  return post(_API.todoKeys, payload)
+}
+
+export const updateTodoKeys = payload => {
+  return put(_API.todoKeys, payload)
+}
+export const deleteTodoKeys = payload => {
+  return axios.delete(_API.todoKeys, { params: payload })
+}
 // 获取用户标签
 export const getUrlTags = () => {
   return get(_API.createTag)

@@ -187,9 +187,15 @@ export const getAllBookMarks = () => {
 
 // 创建书签
 export const createBookMarks = bookmark => {
-  if (isExtentionEnv()) {
-    return chrome.bookmarks.create(bookmark)
-  }
+  return new Promise(resolve => {
+    if (isExtentionEnv()) {
+      return chrome.bookmarks.create(bookmark).then(res => {
+        resolve(res)
+      })
+    } else {
+      return resolve(true)
+    }
+  })
 }
 
 // 移除书签

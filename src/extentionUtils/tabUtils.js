@@ -18,10 +18,7 @@ export const getTabLists = (queryInfo = {}) => {
 
 // 创建新tab
 export const createNewTab = (queryInfo = {}) => {
-  console.error('创建新tab', queryInfo)
-  chrome.tabs.create(queryInfo, tab => {
-    calert('创建新tab成功', JSON.stringify(tab))
-  })
+  return chrome.tabs.create(queryInfo)
 }
 
 // 创建新窗口
@@ -34,7 +31,7 @@ export const createNewWindow = (params = {}, callback) => {
 
 // 切换窗口
 export const toggleWindow = windowId => {
-  chrome.windows.update(windowId, { focused: true })
+  return chrome.windows.update(windowId, { focused: true })
 }
 
 /**
@@ -42,13 +39,17 @@ export const toggleWindow = windowId => {
  */
 export const getCurrentTab = () => {
   return new Promise(resolve => {
-    chrome.tabs.query(
-      {
-        active: true,
-        currentWindow: true,
-      },
-      tabs => resolve(tabs[0])
-    )
+    if (isExtentionEnv()) {
+      chrome.tabs.query(
+        {
+          active: true,
+          currentWindow: true,
+        },
+        tabs => resolve(tabs[0])
+      )
+    } else {
+      resolve(1)
+    }
   })
 }
 
@@ -76,6 +77,13 @@ export const deleteTab = ids => {
       resolve(true)
     }
   })
+}
+
+// 移动tab
+export const moveTabs = (ids, moveProperties) => {
+  if (isExtentionEnv()) {
+    return chrome.tabs.move(ids, moveProperties)
+  }
 }
 
 // window
@@ -114,9 +122,9 @@ export const getAllWindow = () => {
 
 // 删除一个窗口
 export const deleteWindow = windowId => {
-  return new Promise(resolve => {
-    chrome.windows.remove(windowId)
-  })
+  if (isExtentionEnv()) {
+    return chrome.windows.remove(windowId)
+  }
 }
 
 const TabUtils = {
@@ -125,6 +133,7 @@ const TabUtils = {
   deleteTab,
   createNewTab,
   deleteWindow,
+  moveTabs,
   toggleTab,
   getCurrentTab,
   toggleWindow,

@@ -28,17 +28,30 @@ export const convertTabsData = allTabs => {
   if (!allTabs?.length) return {}
   // 按照域名分组归类
   const domainSortData = Object.create(null)
+  const tempData = Object.create(null)
+  const keys = []
   allTabs.forEach(tab => {
     const domain = extractDomain(tab.url)
-    if (!domainSortData[domain]) {
-      domainSortData[domain] = {
+    if (!tempData[domain]) {
+      keys.push(domain)
+      tempData[domain] = {
         tabs: [tab],
       }
     } else {
-      domainSortData[domain].tabs.push(tab)
+      keys.unshift(domain)
+      tempData[domain].tabs.push(tab)
     }
   })
+  const keysSort = Array.from(new Set(keys))
+  keysSort.forEach(i => {
+    domainSortData[i] = tempData[i]
+  })
   return domainSortData
+}
+
+// 判断当年窗口是否有折叠域名
+export const judgeCombineDomain = data => {
+  return Object.values(data).some(i => i.tabs?.length > 1)
 }
 
 // 更新域名下的tab,return 当前tab 所有的信息
@@ -63,30 +76,48 @@ export const deleteDomainData = (domain, currentWindowData) => {
   return currentWindowData
 }
 
-// 过滤掉重复的tab
-export const fitlerRepeatTab = (allTabs, windowTabs) => {
+// 判断当前窗口重复网页
+export const windowHasRepeatTab = (allTabs, isDelete = false) => {
   const tabMap = {}
   const filterResult = [] // 过滤后的tab
+  let result = false
   allTabs.forEach(tab => {
     if (!tabMap[tab.url]) {
       filterResult.push(tab)
       tabMap[tab.url] = true
     } else {
-      TabUtils.deleteTab(tab.id) // 重复的tab删除
+      result = true
+      if (isDelete) TabUtils.deleteTab(tab.id) // 重复的tab删除
     }
   })
-  // 更新windows
-  if (windowTabs?.length) {
-    const curWindowId = allTabs[0].windowId
-    windowTabs.forEach(i => {
-      if (i.windowId === curWindowId) {
-        i.tabs = filterResult
-      }
-    })
-  }
   return {
-    tabs: filterResult,
-    windows: windowTabs || [],
+    hasRepeat: result,
+    filterResult,
+  }
+}
+
+// 过滤当前窗口重复的tab
+export const fitlerRepeatTab = (allTabs, windowTabs) => {
+  const { hasRepeat, filterResult } = windowHasRepeatTab(allTabs, true)
+  if (!hasRepeat) {
+    return {
+      tabs: allTabs,
+      windows: windowTabs,
+    }
+  } else {
+    // 更新windows
+    if (windowTabs?.length) {
+      const curWindowId = allTabs[0].windowId
+      windowTabs.forEach(i => {
+        if (i.windowId === curWindowId) {
+          i.tabs = filterResult
+        }
+      })
+    }
+    return {
+      tabs: filterResult,
+      windows: windowTabs || [],
+    }
   }
 }
 
@@ -140,3 +171,20 @@ export const getUpdateTime = function (updateTime) {
     return '刚刚'
   }
 }
+
+// 时间戳转换日期
+export const dealTime = timesamp => {
+  let now = new Date(timesamp),
+    y = now.getFullYear(),
+    m = now.getMonth() + 1,
+    d = now.getDate()
+
+  return `${y}/${m}/${d} ${now.toTimeString().substr(0, 5)}`
+}
+
+// export const parseStorage = data => {
+//   if (!data) return ''
+//   if (typeof data === 'string') {
+//     return JSON.parse(data)
+//   }
+// }

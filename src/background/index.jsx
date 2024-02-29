@@ -52,90 +52,62 @@ import { fetchPost, fetchGet } from './fetch.js'
 
 // backFun()
 
-const a = {
-  editable: false,
-  frameId: 0,
-  frameUrl: 'https://ant-design.antgroup.com/components/list-cn',
-  menuItemId: 'tabs_extention_later',
-  pageUrl: 'https://ant-design.antgroup.com/components/list-cn',
-  selectionText: 'background',
-}
-const b = {
-  active: true,
-  audible: false,
-  autoDiscardable: true,
-  discarded: false,
-  favIconUrl: 'https://gw.alipayobjects.com/zos/rmsportal/rlpTLlbMzTNYuZGGCVYM.png',
-  groupId: -1,
-  height: 747,
-  highlighted: true,
-  id: 954676296,
-  incognito: false,
-  index: 4,
-  lastAccessed: 1709046192454.432,
-  mutedInfo: { muted: false },
-  pinned: false,
-  selected: true,
-  status: 'complete',
-  title: '列表 List - Ant Design',
-  url: 'https://ant-design.antgroup.com/components/list-cn',
-  width: 1075,
-  windowId: 954676142,
+// 添加记事本/稍后再看
+const postMenusMaps = async (type, menuInfo, tabInfo, token) => {
+  const { pageUrl, selectionText } = menuInfo
+  const menuIds = {
+    tabs_extention_keys: {
+      api: '/todoKeys',
+      storageKey: 'todoKeys',
+    },
+    tabs_extention_later: {
+      api: '/later',
+      storageKey: 'laterData',
+    },
+  }
+  const payload = {
+    pageUrl,
+    status: 0,
+    createTime: Date.now(),
+    pageTitle: tabInfo.title,
+    favIconUrl: tabInfo.favIconUrl,
+  }
+  if (type === 'tabs_extention_keys') {
+    payload.selection = selectionText
+  }
+  if (token) {
+    fetchPost(menuIds[type].api, token, payload)
+  } else {
+    // 未登录，存本地
+    const StorageArray = storageUtils.StorageArray
+    const key = menuIds[type].storageKey
+    payload.createTime = Date.now()
+    await StorageArray.setItem(key, payload)
+  }
 }
 
 // 安装了此拓展程序的配置文件首次启动时触发，初始化扩展,一般使用此事件设置状态或一次性初始化
 chrome.runtime.onInstalled.addListener(function () {
-  console.error('安装了此拓展程序的配置文件首次启动时触发，初始化扩展')
   chrome.contextMenus.create({
-    id: 'tabs_extention_save',
-    title: '当前网址加入收藏',
+    id: 'tabs_extention_keys',
+    title: '添加到记事本',
     type: 'normal',
-    contexts: ['all'],
+    contexts: ['selection'],
   })
 
   chrome.contextMenus.create({
     id: 'tabs_extention_later',
     title: '添加到稍后再看',
     type: 'normal',
-    contexts: ['selection'],
+    contexts: ['all'],
   })
   chrome.contextMenus.onClicked.addListener(async (menuInfo, tabInfo) => {
-    console.error('右键点击事件', JSON.stringify(menuInfo), JSON.stringify(tabInfo))
     const token = await storageUtils.getStorageItem('token')
-    const { menuItemId, pageUrl, selectionText } = menuInfo
+    const { menuItemId } = menuInfo
     switch (menuItemId) {
-      // TODO 可以把收藏和稍后封装一起
-      case 'tabs_extention_save': // 收藏网址
-        if (token) {
-          const url = `/favor?url=${pageUrl}`
-          fetchGet(url).then(res => {
-            console.error('添加收藏传参', res)
-          })
-        } else {
-          // 未登录，存本地
-          const collectData = (await storageUtils.getStorageItem('collectData')) || []
-          collectData.push(collectData)
-          storageUtils.setStorageItem('collectData', collectData)
-        }
-        break
+      case 'tabs_extention_keys': // 关键词
       case 'tabs_extention_later': // 稍后再看
-        const payload = {
-          pageUrl,
-          pageTitle: tabInfo.title,
-          favIconUrl: tabInfo.favIconUrl,
-          selection: selectionText,
-        }
-        if (token) {
-          fetchPost('/later', token, payload).then(res => {
-            console.error('添加稍后再看成功', res)
-          })
-        } else {
-          // 未登录，存本地
-          const laterData = (await storageUtils.getStorageItem('laterData')) || []
-          payload.createTime = Date.now()
-          laterData.push(payload)
-          storageUtils.setStorageItem('laterData', laterData)
-        }
+        postMenusMaps(menuItemId, menuInfo, tabInfo, token)
 
         break
       default:

@@ -1,10 +1,9 @@
-// import { Tabs, Input, Collapse, Badge, Button } from 'antd'
-
 import React, { useEffect, useState } from 'react'
-import { Avatar, List } from 'antd'
+import { List } from 'antd'
 import { CheckCircleOutlined, CheckCircleFilled, CloseCircleOutlined } from '@ant-design/icons'
-import { getLater, updateLater, deleteLater } from '@/api/user'
+import { getTodoKeys, deleteTodoKeys, updateTodoKeys } from '@/api/user'
 import { getUpdateTime, dealTime } from '@/utils'
+import TabUtils from '@/extentionUtils/tabUtils.js'
 import storageUtils from '@/extentionUtils/storage.js'
 import Store from '@/store/index'
 
@@ -19,22 +18,22 @@ const LaterPageCom = props => {
   useEffect(() => {
     const status = props.type
     const isUndo = status === 'undo'
-    const header = isUndo ? '未读' : '已读'
+    const header = isUndo ? '未处理' : '已处理'
     setUndo(isUndo)
-    setHeaderText(`您${header}过的页面`)
+    setHeaderText(`您${header}过的关键词`)
   }, [props])
 
   // 勾选状态，切换已读状态
   const toggleCheck = async item => {
-    const { _id, status } = item
+    const { _id, status = 0 } = item
     if (isLogin) {
       const payload = {
         _id,
         status,
       }
-      await updateLater(payload)
+      await updateTodoKeys(payload)
     } else {
-      await StorageArray.updateItem('laterData', item.createTime, { status: Number(!status) })
+      await StorageArray.updateItem('todoKeys', item.createTime, { status: Number(!status) })
     }
     props.initpage()
   }
@@ -45,44 +44,55 @@ const LaterPageCom = props => {
       const payload = {
         _id: item._id,
       }
-      await deleteLater(payload)
+      await deleteTodoKeys(payload)
     } else {
-      await StorageArray.removeItem('laterData', item.createTime)
+      await StorageArray.removeItem('todoKeys', item.createTime)
     }
+
     props.initpage()
+  }
+
+  // 打开来源页
+  const openOrigin = url => {
+    const createinfo = {
+      url,
+      selected: false,
+      active: false,
+    }
+    TabUtils.createNewTab(createinfo)
   }
 
   return (
     <div>
       <List
-        className={`later-list ${isUndo ? 'undo-list' : 'done-list'}`}
-        itemLayout='horizontal'
+        className={`todo-list ${isUndo ? 'undo-list' : 'done-list'}`}
         bordered
         dataSource={props.dataSource}
         header={<div className='header flex-y-center'>{headerText}</div>}
         renderItem={item => (
-          <List.Item
-            actions={[
-              isUndo ? (
-                <CheckCircleOutlined className='icon' onClick={() => toggleCheck(item)} />
-              ) : (
-                <CheckCircleFilled className='icon' onClick={() => toggleCheck(item)} />
-              ),
-              <CloseCircleOutlined className='icon' onClick={() => closeOne(item)} />,
-            ]}
-          >
+          <List.Item actions={[<CloseCircleOutlined className='icon' onClick={() => closeOne(item)} />]}>
             <List.Item.Meta
               className='pointer '
-              avatar={<Avatar src={item.favIconUrl || ''} />}
               title={
-                <div className='info'>
-                  <div className='time'>
-                    {dealTime(item.createTime)} {getUpdateTime(item.createTime)}
+                <div className='info flex-x-start flex-y-center'>
+                  <div className='checkbox'>
+                    {isUndo ? (
+                      <CheckCircleOutlined className='icon' onClick={() => toggleCheck(item)} />
+                    ) : (
+                      <CheckCircleFilled className='icon' onClick={() => toggleCheck(item)} />
+                    )}
                   </div>
-                  <div className='title'>{item.pageTitle}</div>
+                  <div className='flex'>
+                    <div className='title'>{item.selection}</div>
+                    <div className='desc flex-x-start app-oneline' onClick={() => openOrigin(item.pageUrl)}>
+                      <div className='time mr10'>
+                        {dealTime(item.createTime)} {getUpdateTime(item.createTime)}
+                      </div>
+                      <div className='origin app-oneline'> 来源页面：{item.pageUrl}</div>
+                    </div>
+                  </div>
                 </div>
               }
-              description={<div className='desc app-oneline'>{item.pageUrl}</div>}
             />
           </List.Item>
         )}
@@ -100,6 +110,7 @@ class LaterPage extends React.Component {
       doneData: [],
     }
   }
+
   dealData = result => {
     const undoData = []
     const doneData = []
@@ -116,26 +127,26 @@ class LaterPage extends React.Component {
     })
   }
 
-  getLaterData = async () => {
+  getKeysData = async () => {
     const { isLogin } = this.state
     if (isLogin) {
-      getLater().then(res => {
+      getTodoKeys().then(res => {
         this.dealData(res.data)
       })
     } else {
-      const todoKeysData = await storageUtils.StorageArray.getItem('laterData')
+      const todoKeysData = await storageUtils.StorageArray.getItem('todoKeys')
       this.dealData(todoKeysData)
     }
   }
   componentDidMount() {
-    this.getLaterData()
+    this.getKeysData()
   }
   render() {
     const { undoData, doneData } = this.state
     return (
       <div className='later-page'>
-        <LaterPageCom type='undo' dataSource={undoData} initpage={this.getLaterData}></LaterPageCom>
-        <LaterPageCom type='done' dataSource={doneData} initpage={this.getLaterData}></LaterPageCom>
+        <LaterPageCom type='undo' dataSource={undoData} initpage={this.getKeysData}></LaterPageCom>
+        <LaterPageCom type='done' dataSource={doneData} initpage={this.getKeysData}></LaterPageCom>
       </div>
     )
   }

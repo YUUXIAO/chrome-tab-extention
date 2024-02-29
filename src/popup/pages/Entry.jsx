@@ -6,6 +6,7 @@ import './entry.less'
 const pageNames = {
   '/popup/later': '稍后再看',
   '/popup/urlGroup': '网页组',
+  '/popup/todoKeys': '关键词记事本',
 }
 
 function Entry() {

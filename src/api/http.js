@@ -11,8 +11,8 @@ axios.defaults.timeout = 10000
 // 请求拦截器
 axios.interceptors.request.use(
   async config => {
-    return storageUtils.getStorageItem('token').then(token => {
-      token && (config.headers.Authorization = `Bearer ${token}`)
+    return storageUtils.getStorageItem('token').then(val => {
+      val && (config.headers.Authorization = `Bearer ${val}`)
       return config
     })
   },
@@ -32,7 +32,7 @@ axios.interceptors.response.use(
   },
   // 服务器状态码不是2开头的的情况
   error => {
-    if (error.response.status) {
+    if (error?.response?.status) {
       switch (error.response.status) {
         case 401:
         case 403:

@@ -18,14 +18,15 @@
   border: 1px solid #eee;
   padding: 20px 10px;
   border-radius: 20px;
+  background: #fff;
 }
 
 .search-wrapper {
   margin-bottom: 8px;
 }
 .domain-icon {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   margin-right: 8px;
   border-radius: 50%;
   background-color: #efefef;
@@ -37,22 +38,23 @@
 }
 .collap-header {
   font-weight: 500;
-  width: 650px;
+  width: 634px;
 }
 
 .edit-input {
-  border: 1px solid red;
   width: 100px;
 }
 
 .tab-one {
   font-size: 13px;
-  // height: 40px;
-  // border: 1px solid red;
+
   cursor: pointer;
   padding: 0;
   box-sizing: border-box;
   border-bottom: 1px dashed #eee;
+  &.current {
+    background: paleturquoise;
+  }
 
   &:last-child {
     border-bottom: 0;
@@ -80,7 +82,7 @@
     .action-icon {
       font-size: 18px;
       &.star-filled {
-        color: #f0a843;
+        color: #b1b3b8;
       }
 
       &:first-child {

@@ -1,5 +1,5 @@
 import React from 'react'
-import { Form, Button, Space, Modal, Alert, Input } from 'antd'
+import { Form, Button, Space, Alert, Input } from 'antd'
 import Store from '@/store/index'
 import storageUtils from '@/extentionUtils/storage'
 import tabUtils from '@/extentionUtils/tabUtils'
@@ -22,9 +22,7 @@ class LoginPop extends React.Component {
       }, // 表单信息
     }
   }
-  componentDidMount() {
-    console.error('stroe', Store.getState())
-  }
+
   // 获取验证码
   getCode = () => {
     const { email } = this.state.formData
@@ -38,12 +36,10 @@ class LoginPop extends React.Component {
     if (this.state.inOneMinute) return
 
     sendMail({ email: email }).then(res => {
-      console.error('获取验证码成功', res)
       let time = 60
       this.setState({
         inOneMinute: true,
       })
-      // const { expireTime } = this.state
       const timer = setInterval(() => {
         time--
         if (time >= 0) {
@@ -62,17 +58,13 @@ class LoginPop extends React.Component {
   }
   // 登录
   handleLogin = async () => {
-    console.error(Store.getState().user.loginWindowId)
-
-    const { email, code } = this.state.formData
-    const collectData = (await storageUtils.getStorageItem('collectData')) || []
-    const laterData = (await storageUtils.getStorageItem('laterData')) || []
-    // laterData.push(payload)
-    // storageUtils.setStorageItem('laterData', laterData)
     await this.formRef.current.validateFields()
+    const { email, code } = this.state.formData
+    const collectData = await storageUtils.StorageArray.getItem('collectData')
+    const laterData = await storageUtils.StorageArray.getItem('laterData')
+    const todoData = await storageUtils.StorageArray.getItem('todoKeys')
     const data = {
       mail: email,
-      // password: password,
       code,
     }
     if (collectData?.length) {
@@ -81,14 +73,13 @@ class LoginPop extends React.Component {
     if (laterData?.length) {
       data.laterData = laterData
     }
+    if (todoData?.length) {
+      data.todoData = todoData
+    }
     userLogin(data)
       .then(async res => {
-        console.error('登录成功', res)
-        // this.props.setPopVisible('isShowLogin', false)
-
         const { token, userId } = res
-        storageUtils.setStorageItem('token', token)
-
+        await storageUtils.setStorageItem('token', token)
         if (collectData?.length) {
           storageUtils.removeStorageItem('collectData')
         }
@@ -98,7 +89,9 @@ class LoginPop extends React.Component {
 
         // 关闭这个窗口
         const currentWindowId = await tabUtils.getCurrentWindowId()
-        console.error('登录成功，需要关闭当年登录窗口', currentWindowId)
+        tabUtils.deleteWindow(Number(currentWindowId))
+        storageUtils.removeStorageItem('loginWindowId')
+
         // 保存用户信息到store
         Store.dispatch({
           type: 'get_user',
@@ -110,13 +103,10 @@ class LoginPop extends React.Component {
         })
       })
       .catch(err => {
-        // console.error(err)
         this.setState({
           isShowMessage: true,
           errorMessage: err.data,
         })
-        // this.props.setPopVisible('isShowLogin', false)
-        // Message.error(err.data)
       })
   }
   alertClose = () => {
@@ -135,14 +125,6 @@ class LoginPop extends React.Component {
   render() {
     const { inOneMinute, errorMessage, expireTime, isShowMessage } = this.state
     return (
-      // <Modal
-      //   footer={null}
-      //   title='用户登录'
-      //   centered
-      //   width={600}
-      //   open={this.props.open}
-      //   onCancel={() => this.props.setPopVisible('isShowLogin', false)}
-      // >
       <div className='create-window-wrapper'>
         {isShowMessage && <Alert closable message={errorMessage} type='error' onClose={this.alertClose} />}
         <Form
@@ -185,7 +167,6 @@ class LoginPop extends React.Component {
           </Form.Item>
         </Form>
       </div>
-      // </Modal>
     )
   }
 }
