@@ -62,14 +62,7 @@ const allbookmarks = [
             title: '在react中使用接口请求的方式_react如何调用后端接口-CSDN博客',
             url: 'https://blog.csdn.net/Liu_G_Q/article/details/131737166',
           },
-          {
-            dateAdded: 1706965595872,
-            id: '13',
-            index: 6,
-            parentId: '2',
-            title: 'Cannot use import statement outside a module [React TypeScript 错误的处理方法]',
-            url: 'https://www.freecodecamp.org/chinese/news/cannot-use-import-statement-outside-a-module-react-typescript-error-solved/',
-          },
+
           {
             dateAdded: 1707047255580,
             id: '14',
@@ -85,14 +78,6 @@ const allbookmarks = [
             parentId: '2',
             title: 'vscode 配置 eslint 保存代码自动格式化_vscode安装eslint保存自动格式化-CSDN博客',
             url: 'https://blog.csdn.net/qq_37241934/article/details/128113683?spm=1001.2101.3001.6650.8&utm_medium=distribute.pc_relevant.none-task-blog-2%7Edefault%7EBlogCommendFromBaidu%7ERate-8-128113683-blog-107041181.235%5Ev43%5Epc_blog_bottom_relevance_base8&depth_1-utm_source=distribute.pc_relevant.none-task-blog-2%7Edefault%7EBlogCommendFromBaidu%7ERate-8-128113683-blog-107041181.235%5Ev43%5Epc_blog_bottom_relevance_base8&utm_relevant_index=16',
-          },
-          {
-            dateAdded: 1707139061640,
-            id: '16',
-            index: 9,
-            parentId: '2',
-            title: '使用 Express 处理 POST 请求 - 掘金',
-            url: 'https://juejin.cn/post/7029707249522049037',
           },
           {
             dateAdded: 1707143750392,

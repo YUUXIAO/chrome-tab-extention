@@ -24,7 +24,6 @@ export const createNewTab = (queryInfo = {}) => {
 // 创建新窗口
 export const createNewWindow = (params = {}, callback) => {
   chrome.windows.create(params, window => {
-    console.error('创建新窗口', window)
     callback && callback(window)
   })
 }
@@ -111,7 +110,6 @@ export const getAllWindow = () => {
   return new Promise(resolve => {
     if (isExtentionEnv()) {
       chrome.windows.getAll({}, windows => {
-        console.error('获取所有窗口', windows)
         resolve(windows)
       })
     } else {

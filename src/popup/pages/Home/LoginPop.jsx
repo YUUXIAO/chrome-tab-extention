@@ -78,7 +78,7 @@ class LoginPop extends React.Component {
     }
     userLogin(data)
       .then(async res => {
-        const { token, userId } = res
+        const { token } = res.data
         await storageUtils.setStorageItem('token', token)
         if (collectData?.length) {
           storageUtils.removeStorageItem('collectData')
@@ -93,19 +93,19 @@ class LoginPop extends React.Component {
         storageUtils.removeStorageItem('loginWindowId')
 
         // 保存用户信息到store
-        Store.dispatch({
-          type: 'get_user',
-          payload: {
-            token,
-            userId,
-            ...data,
-          },
-        })
+        // Store.dispatch({
+        //   type: 'get_user',
+        //   payload: {
+        //     token,
+        //     userId,
+        //     ...data,
+        //   },
+        // })
       })
       .catch(err => {
         this.setState({
           isShowMessage: true,
-          errorMessage: err.data,
+          errorMessage: err.data?.msg,
         })
       })
   }
@@ -126,7 +126,7 @@ class LoginPop extends React.Component {
     const { inOneMinute, errorMessage, expireTime, isShowMessage } = this.state
     return (
       <div className='create-window-wrapper'>
-        {isShowMessage && <Alert closable message={errorMessage} type='error' onClose={this.alertClose} />}
+        {isShowMessage && <Alert className='mb10' closable message={errorMessage} type='error' onClose={this.alertClose} />}
         <Form
           labelCol={{
             span: 5,

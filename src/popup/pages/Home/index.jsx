@@ -15,22 +15,13 @@ import {
   EyeOutlined,
   CaretRightOutlined,
 } from '@ant-design/icons'
-// import { mockWindowsData, mockTabsData } from '@/api/popup.js'
 import TabUtils from '@/extentionUtils/tabUtils.js'
 import { updateDomainData, deleteDomainData, fitlerRepeatTab, windowHasRepeatTab, judgeCombineDomain, convertTabsData } from '@/utils'
 import { urlCollect, getUserInfo } from '@/api/user'
 import bookMarksUtils from '@/extentionUtils/bookmarks.js'
 import storageUtils from '@/extentionUtils/storage'
-
 import CreateNewWindow from '../components/createNewWindow'
-// import TodoList from '../components/TodoList'
-// import LoginPop from './LoginPop'
-// import urlsGroupPage from '../components/urlsGroupPage'
-
 import Store from '@/store/index'
-
-// import { hasToken, isExtentionEnv } from '@/utils.js'
-// import { VITE_BOOKMARKS_DIR_NAME } from import.meta.env
 
 const { Search } = Input
 // TODO 抽出一个类的实现
@@ -52,7 +43,7 @@ class DomainOne extends React.Component {
           alt={tabData.title}
           onError={e => {
             e.target.onerror = null
-            e.target.src = ''
+            e.target.src = '/logo.png'
           }}
           className='domain-icon'
           src={tabData.favIconUrl || ''}
@@ -173,13 +164,9 @@ class Home extends React.Component {
     return operations
   }
 
-  // clearData = () => {
-  //   storageUtils.removeStorageItem('token')
-  //   storageUtils.removeStorageItem('collectData')
-  //   storageUtils.removeStorageItem('todoKeys')
-  //   storageUtils.removeStorageItem('laterData')
-  //   storageUtils.removeStorageItem('windowName')
-  // }
+  clearData = () => {
+    storageUtils.clearStoragItem()
+  }
 
   async componentDidMount() {
     this.getUserInfo()
@@ -340,7 +327,6 @@ class Home extends React.Component {
     e.stopPropagation()
     TabUtils.deleteTab(tab.id)
     // 更新域名下的数据
-    console.error('删除单个tab', this.state.windowTabs)
     // const { windowTabs } = this.state
     const windowTabs = this.deleteTab([tab.id])
     const updateWindowData = updateDomainData(tab, domain, domainValues, this.state.currentWindowTab)
@@ -366,7 +352,6 @@ class Home extends React.Component {
     })
     // 判断当前窗口是否还有其他tab
     const updateWindowTabData = deleteDomainData(domain, currentWindowTab)
-    console.error('updateWindowTabData', updateWindowTabData)
     if (Object.keys(updateWindowTabData)?.length) {
       // 还有其他tab数据
       const windowTabs = this.deleteTab(tabs.map(i => i.id))
@@ -450,6 +435,10 @@ class Home extends React.Component {
         this.props.navigate('/popup/todoKeys')
         break
       case 'create-tag':
+        if (!this.state.isLogin) {
+          alert('请先登录再使用此功能')
+          return
+        }
         this.props.navigate('/popup/urlGroup')
         break
       case 'later':
@@ -522,9 +511,9 @@ class Home extends React.Component {
         }
       })
       const moveTabIds = otherTabs.map(i => i.id)
-      TabUtils.moveTabs(moveTabIds, { index: -1, windowId: curWindowId })
+      await TabUtils.moveTabs(moveTabIds, { index: -1, windowId: curWindowId })
+      this.getAllWindows()
     }
-    this.getAllWindows()
   }
 
   // 获取所有标签
@@ -591,7 +580,7 @@ class Home extends React.Component {
       windowTabs: windowTabs,
       curTabData,
       activeTab: curWindowId,
-      hasCombineDomain,
+      hasCombineDomain: hasCombineDomain,
       currentWindowTab: windowSortList,
     })
   }
@@ -647,6 +636,7 @@ class Home extends React.Component {
           {/* <Switch onChange={this.onSwitchChange} /> */}
         </div>
         {/* 操作按钮 */}
+        {/* <Button onClick={this.clearData}></Button> */}
 
         {this.operationBtns
           .filter(btn => btn.visible)
@@ -716,7 +706,7 @@ class Home extends React.Component {
                         src={domainValues.tabs[0].favIconUrl}
                         onError={e => {
                           e.target.onerror = null
-                          e.target.src = ''
+                          e.target.src = '/logo.png'
                         }}
                         alt={domainValues.tabs[0].title}
                         className='domain-icon'

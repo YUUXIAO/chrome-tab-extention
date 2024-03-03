@@ -2,10 +2,10 @@ import axios from 'axios'
 import storageUtils from '@/extentionUtils/storage'
 import Store from '@/store/index'
 
-const BASE_URL = 'http://127.0.0.1:3000'
-// const PROD_BASE_URL = 'http://120.24.190.164:8181'
+// const BASE_URL = 'http://127.0.0.1:3000'
+const PROD_BASE_URL = 'http://120.24.190.164:8181'
 
-axios.defaults.baseURL = BASE_URL
+axios.defaults.baseURL = PROD_BASE_URL
 axios.defaults.timeout = 10000
 
 // 请求拦截器
@@ -43,7 +43,7 @@ axios.interceptors.response.use(
           break
 
         default:
-          console.error(JSON.stringify(error.response.data.msg))
+          console.log(JSON.stringify(error.response.data.msg))
       }
       return Promise.reject(error.response)
     }

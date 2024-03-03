@@ -27,7 +27,6 @@ const deleteTempDir = tempDir => {
     fs.readdirSync(tempDir).forEach(file => {
       const tempPath = path.join(tempDir, file)
       if (fs.lstatSync(tempPath).isDirectory()) {
-        console.error('deleteTempDir---', tempPath)
         deleteTempDir(tempPath)
       } else {
         fs.unlinkSync(tempPath)
@@ -38,7 +37,6 @@ const deleteTempDir = tempDir => {
 }
 
 // content-script 临时打包目录
-console.error('222', process.env)
 const tempContentDir = path.resolve(process.cwd(), process.env.TEMP_CONTENT_DIR)
 const tempBackgroundDir = path.resolve(process.cwd(), process.env.TEMP_BACKGROUND_DIR)
 const targetBuildDir = path.resolve(process.cwd(), process.env.TARGET_BUILD_DIR)

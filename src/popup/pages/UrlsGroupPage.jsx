@@ -4,7 +4,7 @@ import { Form, Button, Modal, Checkbox, Tabs, List, Tag, Space, Alert, Input, Ca
 import Store from '@/store/index'
 import TabUtils from '@/extentionUtils/tabUtils.js'
 import { createUrlTag, getUrlTags } from '@/api/user'
-import { FastBackwardFilled, CopyOutlined, PlusOutlined } from '@ant-design/icons'
+import { CopyOutlined, PlusOutlined } from '@ant-design/icons'
 
 import './urlsGroupPage.less'
 
@@ -22,9 +22,6 @@ class CreateModal extends React.Component {
       favorUrlMaps: Store.getState().user.allBookmarks, // 书签收藏
     }
   }
-  // componentDidMount() {
-  //   console.error('书签收藏', Store.getState().user)
-  // }
 
   // 获取快捷链接
   changeFiled1 = (filed, value, options) => {
@@ -42,7 +39,6 @@ class CreateModal extends React.Component {
     } else {
       // 收藏
       if (filed === 'collect') {
-        console.error(options)
         formData[filed] = options.map(opt => {
           const val = opt[opt.length - 1]
           return {
@@ -83,13 +79,13 @@ class CreateModal extends React.Component {
     }
     createUrlTag(params)
       .then(res => {
-        // alert('存网址标签成功')
         this.props.initpage()
+        this.props.cancel()
       })
       .catch(err => {
         this.setState({
           isShowMessage: true,
-          errorMessage: err.msg,
+          errorMessage: err?.data?.msg || err.data.data,
         })
       })
   }
@@ -105,7 +101,7 @@ class CreateModal extends React.Component {
     return (
       <Modal footer={null} title='查看/创建网页组' centered width={600} open={this.props.open} onCancel={this.props.cancel}>
         <div className='create-window-wrapper'>
-          {isShowMessage && <Alert closable message={errorMessage} type='error' onClose={this.alertClose} />}
+          {isShowMessage && <Alert className='mb10' closable message={errorMessage} type='error' onClose={this.alertClose} />}
 
           <Form
             labelCol={{
@@ -179,7 +175,6 @@ class UrlsGroupPage extends React.Component {
 
   getUserGroups = () => {
     getUrlTags().then(res => {
-      console.error('获取到所有标签', res)
       const allUrlTags = res?.data || []
       this.setState({
         allUrlTags,
@@ -208,12 +203,7 @@ class UrlsGroupPage extends React.Component {
     })
   }
 
-  // tagClick = (e, tag) => {
-  //   e.stopPropagation()
-  // }
-
   checkboxChange = (e, tag) => {
-    console.error('多选', e, tag)
     let { openIds } = this.state
     const checked = e.target.checked
     if (checked) {
@@ -226,7 +216,6 @@ class UrlsGroupPage extends React.Component {
 
   // 批量打开窗口
   confirmOpen = () => {
-    console.error('批量打开窗口', this.state.openIds)
     const { openIds, allUrlTags } = this.state
     let createUrls = []
     openIds.forEach(id => {
@@ -241,9 +230,7 @@ class UrlsGroupPage extends React.Component {
     const createData = {
       url: createUrls,
     }
-    TabUtils.createNewWindow(createData, function (data) {
-      console.error('创建成功', data)
-    })
+    TabUtils.createNewWindow(createData)
   }
 
   render() {
@@ -301,44 +288,16 @@ class UrlsGroupPage extends React.Component {
             dataSource={currentTagUrls}
             renderItem={item => (
               <List.Item className='url-one'>
-                {/* <div className='flex-x-start title'>{item.title}</div>
-                <div className='url'>{item.url}</div> */}
                 <List.Item.Meta
-                  // avatar={<Avatar src={`https://api.dicebear.com/7.x/miniavs/svg?seed=${index}`} />}
                   title={<div className='title app-oneline'>{item?.title || item}</div>}
                   description={<div className='url app-oneline'>{item?.url || '手动添加网址'}</div>}
                 />
               </List.Item>
             )}
           />
-          {/* <Space size={[0, 8]} wrap>
-            {allUrlTags.map((item, index) => {
-              return (
-                <div>
-                  {isShowCheckbox && (
-                    <Checkbox size='small' className='mr10' key={item._id} onChange={e => this.checkboxChange(e, item)}>
-                      <Tag className='pointer' key={index} color={colors[index % 7]}>
-                        {item.name}
-                      </Tag>
-                    </Checkbox>
-                  )}
-                  {!isShowCheckbox && (
-                    <Tag className='pointer' key={item._id} color={colors[index % 7]}>
-                      {item.name}
-                    </Tag>
-                  )}
-                </div>
-              )
-            })}
-          </Space> */}
         </div>
-        {/* </Modal> */}
         {/* 创建标签组 */}
-        {isShowCreate && (
-          <CreateModal open={isShowCreate} cancel={() => this.showCreateModal(FastBackwardFilled)} initpage={this.getUserGroups}>
-            {' '}
-          </CreateModal>
-        )}
+        {isShowCreate && <CreateModal open={isShowCreate} cancel={() => this.showCreateModal(false)} initpage={this.getUserGroups}></CreateModal>}
       </div>
     )
   }

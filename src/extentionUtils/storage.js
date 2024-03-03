@@ -29,11 +29,11 @@ const removeStorageItem = keys => {
   }
 }
 
-const clearStoragItem = key => {
+const clearStoragItem = () => {
   if (isExtentionEnv()) {
-    chrome.storage.sync.clear(key)
+    chrome.storage.sync.clear()
   } else {
-    localStorage.clearItem(key)
+    localStorage.clear()
   }
 }
 

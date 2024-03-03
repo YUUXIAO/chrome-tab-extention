@@ -24,7 +24,6 @@ const reducers = (state = initState, action) => {
 
   // 获取到用户信息
   if (action.type === 'get_user') {
-    // console.error('获取到用户信息', action.payload)
     return {
       ...state,
       userInfo: Object.assign({}, state.userInfo, action.payload),
@@ -34,7 +33,6 @@ const reducers = (state = initState, action) => {
   }
   // 获取到登录窗口信息
   if (action.type === 'get_loginWindow') {
-    console.error('获取到登录窗口信息', action.payload)
     return {
       ...state,
       loginWindowId: action.payload,

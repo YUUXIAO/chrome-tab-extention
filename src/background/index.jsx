@@ -1,56 +1,5 @@
-// import TabUtils from '@/extentionUtils/tabUtils.js'
 import storageUtils from '@/extentionUtils/storage.js'
-// import messgaeUtils from './message.js'
-import { fetchPost, fetchGet } from './fetch.js'
-
-// // 获取当前窗口所有数据
-// const getAllWindows = async () => {
-//   const ajaxArray = [TabUtils.getAllWindow(), TabUtils.getTabLists(), TabUtils.getCurrentWindowId()]
-//   const [windows, allTabs, curWindowId] = await Promise.all(ajaxArray)
-
-//   console.error('background-谷歌api获取窗口信息', JSON.stringify(windows))
-//   console.error('background-谷歌api获取tab信息', JSON.stringify(allTabs))
-
-//   // const windowMap = {}
-//   // const windowTabs = []
-//   // let currentTabs = []
-//   // windows.forEach((win, winIdx) => {
-//   //   const parentId = win.id
-//   //   currentTabs = allTabs.filter(i => i.windowId === parentId)
-//   //   // TODO 无痕模式
-//   //   const windowInfo = {
-//   //     // isCurrent: win.focused,
-//   //     name: `窗口-${winIdx}`,
-//   //     windowId: parentId,
-//   //     tabs: currentTabs,
-//   //   }
-//   //   //   console.error("窗口", win)
-
-//   //   // TODO 删除map
-//   //   windowMap[parentId] = windowInfo
-//   //   windowTabs.push(windowInfo)
-//   // })
-
-//   // const windowSortList = convertTabsData(currentTabs) // 以域名排序的sort
-//   // this.setState({
-//   //   windowTabs: windowTabs,
-//   //   activeTab: curWindowId,
-//   //   currentWindowTab: windowSortList
-//   // })
-
-//   // console.error('windowTabs', windowTabs)
-//   // console.error('windowSortList', windowSortList)
-// }
-
-// console.error('background页面代码注入---------------')
-
-// function backFun() {
-//   console.log('arguments：', arguments)
-//   const allViews = chrome.extension.getViews()
-//   console.log('chrome.extension.getViews()：', allViews)
-// }
-
-// backFun()
+import { fetchPost } from './fetch.js'
 
 // 添加记事本/稍后再看
 const postMenusMaps = async (type, menuInfo, tabInfo, token) => {
@@ -113,15 +62,12 @@ chrome.runtime.onInstalled.addListener(function () {
       default:
         break
     }
-    // messgaeUtils.sendMessageToContentScript('hello,我是messga', res => {
-    //   console.error('收到消息回复', res)
-    // })
   })
 })
 
 // 浏览器打开事件
 chrome.runtime.onStartup.addListener(function () {
-  console.error('浏览器打开事件---初始化插件')
+  console.log('浏览器打开事件---初始化插件')
 })
 
 // chrome.tabs.onCreated.addListener(function (tab) {

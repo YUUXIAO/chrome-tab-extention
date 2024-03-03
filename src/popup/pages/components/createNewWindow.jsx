@@ -15,7 +15,6 @@ class CreateNewWindowCom extends React.Component {
     }
   }
   componentDidMount() {
-    console.error('stroe', Store.getState())
     Store.dispatch({
       type: 'favor_add',
       payload: mockUserCollect,
