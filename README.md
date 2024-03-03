@@ -1,28 +1,34 @@
-# Getting Started with Create React App
+> 2024/3/3: TabManager 插件v1已经提交审核啦～～🎈
+
+# TabManager谷歌插件
 
 基于 react、reactRouterV6、Vite、antDesign 实现的一个谷歌插件前端项目
 
-后端基于 nodeJs+ mongodb 实现，具体可查看 https://github.com/YUUXIAO/tab-extentions-backend
+后端基于 node、mongodb 实现，具体可查看 https://github.com/YUUXIAO/tab-extentions-backend
 
-## DONE && TODO LIST
+## FEATURE && TODO
 
-### DONE LIST
+### FEATURE
 
-- [x] 一键删除tab或窗口
-- [x] 合并所有窗口 && 一键tab去重
-- [x] 一键批量打开网站组
-- [x] 邮箱登录📮
-- [x] 网站右键菜单“添加稍后再看”
-- [x] 网站选中关键词右键菜单“添加记事本”
+- [x] 一键删除一个或一组tab选项卡或窗口
+- [x] 合并所有窗口选项卡 && 一键tab去重
+- [x] 批量自定义网页组并支持一键网站组
+- [x] 邮箱登录📮，并同步本地数据
+- [x] 网站右键菜单“添加稍后再看”,支持修改完成状态
+- [x] 网站选中关键词右键菜单“添加记事本”，支持修改完成状态
 - [x] 点击网站收藏可同步操作chrome书签
-- [x] build 通过脚本处理解开chrome相关api，注释mock数据，通过判断浏览器环境区分api
 
-### TODO LIST
+### TODO
 
+- [ ] perf：网页组编辑网址（目前仅支持新建网页组和一键窗口打开组的网页）
+- [ ] perf：增加tab网页加载状态判断或刷新功能
 - [ ] feature：网页时长统计
 - [ ] feature：绑定谷歌账号 || outh2登录（chrome.identity）
-- [ ] feature：快捷恢复（注入页面icon）【技术调研中💭】
-- [ ] feature：当前窗口新建空白 tab,显示所有该窗口的 tablist【考虑中💭】
+- [ ] feature：选项卡组（tab Group）,考虑和现有网页组打通数据
+- [ ] feature：网页注入悬浮球（待办、提示、网页组快捷操作）
+- [ ] feature：插件设置页，支持用户自定义悬浮球、待办提示、收藏同步书签等功能
+- [ ] feature：【技术调研中💭】快捷恢复（注入页面icon）
+- [ ] feature：【考虑中💭】当前窗口新建选项卡,显示所有该窗口的 tablist
 
 ## Available Scripts
 
