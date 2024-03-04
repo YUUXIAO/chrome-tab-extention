@@ -1,10 +1,14 @@
-> 2024/3/3: TabManager 插件v1已经提交审核啦～～🎈
+> TabManager 插件v1目前正在chrome webstore 审核中啦～～🎈
 
 # TabManager谷歌插件
 
 基于 react、reactRouterV6、Vite、antDesign 实现的一个谷歌插件前端项目
 
 后端基于 node、mongodb 实现，具体可查看 https://github.com/YUUXIAO/tab-extentions-backend
+
+谷歌插件开发相关内容了解可查看：https://github.com/YUUXIAO/NOTE/blob/master/Markdown/%E6%B5%8F%E8%A7%88%E5%99%A8/chorme%E6%8F%92%E4%BB%B6%E5%BC%80%E5%8F%91%EF%BC%88V2%EF%BC%89.md
+
+本前端项目相关技术具体实现可查看：https://github.com/YUUXIAO/NOTE/blob/master/Chrome%E6%8F%92%E4%BB%B6.md
 
 ## FEATURE && TODO
 

@@ -2,10 +2,7 @@ import axios from 'axios'
 import storageUtils from '@/extentionUtils/storage'
 import Store from '@/store/index'
 
-// const BASE_URL = 'http://127.0.0.1:3000'
-const PROD_BASE_URL = 'http://120.24.190.164:8181'
-
-axios.defaults.baseURL = PROD_BASE_URL
+axios.defaults.baseURL = import.meta.env.BASE_URL
 axios.defaults.timeout = 10000
 
 // 请求拦截器

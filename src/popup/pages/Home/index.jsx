@@ -737,7 +737,7 @@ class Home extends React.Component {
                           favorUrls={collectUrls}
                           domain={domain}
                           curTabData={curTabData}
-                          key={tabIdx}
+                          key={tab.id}
                           domainValues={domainValues}
                           onTabCollect={this.onTabCollect}
                           tabClick={this.tabClick}

@@ -58,7 +58,7 @@ updateFiles.forEach(r => {
         // }
       }
     })
-    console.error('needOpenLine', needOpenLine)
+    // console.error('needOpenLine', needOpenLine)
   })
 })
 
