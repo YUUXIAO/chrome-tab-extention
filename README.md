@@ -6,9 +6,9 @@
 
 后端基于 node、mongodb 实现，具体可查看 https://github.com/YUUXIAO/tab-extentions-backend
 
-谷歌插件开发相关内容了解可查看：https://github.com/YUUXIAO/NOTE/blob/master/Markdown/%E6%B5%8F%E8%A7%88%E5%99%A8/chorme%E6%8F%92%E4%BB%B6%E5%BC%80%E5%8F%91%EF%BC%88V2%EF%BC%89.md
+谷歌插件开发相关内容了解可查看：https://github.com/YUUXIAO/NOTE/blob/master/Markdown/%E6%B5%8F%E8%A7%88%E5%99%A8/chrome%E6%8F%92%E4%BB%B6%E5%BC%80%E5%8F%91.md
 
-本前端项目相关技术具体实现可查看：https://github.com/YUUXIAO/NOTE/blob/master/Chrome%E6%8F%92%E4%BB%B6.md
+本前端项目相关技术具体实现可查看：https://github.com/YUUXIAO/NOTE/blob/master/Markdown/%E6%B5%8F%E8%A7%88%E5%99%A8/Chrome%E6%8F%92%E4%BB%B6%E6%8A%80%E6%9C%AF%E5%AE%9E%E7%8E%B0%E6%96%B9%E6%A1%88.md
 
 ## FEATURE && TODO
 
