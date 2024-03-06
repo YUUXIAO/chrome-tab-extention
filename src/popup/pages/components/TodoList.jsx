@@ -1,7 +1,5 @@
 import React from 'react'
-import { Form, Button, message, Radio, Select, Input, Modal, Space, Collapse } from 'antd'
-import Store from '@/store/index'
-import { mockUserCollect } from '@/api/user'
+import { Button, message, Radio, Select, Input, Space, Collapse } from 'antd'
 const { Option } = Select
 
 class TodoList extends React.Component {

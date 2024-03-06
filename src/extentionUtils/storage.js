@@ -68,7 +68,11 @@ class StorageArray {
     if (!isArray) {
       idx = listdata.indexOf(val)
     } else {
-      idx = listdata.findIndex(i => i.createTime === val)
+      if (key === 'collectData') {
+        idx = listdata.findIndex(i => i.url === val)
+      } else {
+        idx = listdata.findIndex(i => i.createTime === val)
+      }
     }
     listdata.splice(idx, 1)
     setStorageItem(key, listdata)

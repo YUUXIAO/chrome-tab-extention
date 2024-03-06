@@ -18,6 +18,7 @@ import {
 import TabUtils from '@/extentionUtils/tabUtils.js'
 import { updateDomainData, deleteDomainData, fitlerRepeatTab, windowHasRepeatTab, judgeCombineDomain, convertTabsData } from '@/utils'
 import { urlCollect, getUserInfo } from '@/api/user'
+import BookMarkPop from '../components/BookMarkPop'
 import bookMarksUtils from '@/extentionUtils/bookmarks.js'
 import storageUtils from '@/extentionUtils/storage'
 import CreateNewWindow from '../components/createNewWindow'
@@ -54,7 +55,7 @@ class DomainOne extends React.Component {
         </div>
         <div className='action flex-x-end'>
           {/* 收藏按钮 */}
-          {favorUrls.includes(tabData.url) ? (
+          {favorUrls.find(i => i?.url === tabData.url) ? (
             <HeartFilled className='action-icon star-filled' onClick={e => this.props.onTabCollect(e, tabData)} />
           ) : (
             <HeartOutlined className='action-icon' onClick={e => this.props.onTabCollect(e, tabData)} />
@@ -119,8 +120,11 @@ class Home extends React.Component {
     super(props)
     this.state = {
       curTabData: {},
-      extentionDir: null,
+
+      // extentionDir: null,
       userinfo: {},
+      bookMarkItem: {}, // 当前操作的书签数据
+      bookMarkPopShow: false, // 选择书签
       activeTab: '', // 当前活跃窗口ID
       windowTabs: [], // 所有窗口数据
       isShowTodo: false, // 是否打开记事本
@@ -195,16 +199,27 @@ class Home extends React.Component {
         })
       })
       .catch(async () => {
-        const collectData = await storageUtils.StorageArray.getItem('collectData')
+        let collectData = await storageUtils.StorageArray.getItem('collectData')
         const laterData = await storageUtils.StorageArray.getItem('laterData')
         const todoKeysData = await storageUtils.StorageArray.getItem('todoKeys')
         this.setState({
           userinfo: {
-            laterCount: laterData.length,
-            todoCount: todoKeysData.length,
+            laterCount: laterData.filter(i => i.status === 0)?.length || 0,
+            todoCount: todoKeysData.filter(i => i.status === 0)?.length || 0,
           },
         })
         if (collectData?.length) {
+          console.log('本地有收藏数据', collectData)
+          const isOldData = collectData.find(i => typeof i === 'string')
+          if (isOldData) {
+            collectData = collectData.map(i => {
+              return {
+                url: i,
+                bookMarkId: null,
+              }
+            })
+          }
+
           Store.dispatch({
             type: 'get_user',
             payload: {
@@ -260,48 +275,50 @@ class Home extends React.Component {
     e.stopPropagation()
     TabUtils.toggleTab(tab, this.state.activeTab)
   }
+
   // 收藏tab
   onTabCollect = async (e, tab) => {
     e.stopPropagation()
-    const { isLogin, collectUrls, extentionDir, windowTabs, activeTab } = this.state
+    const { collectUrls } = this.state
     const { url } = tab
-    const hasFavor = collectUrls.includes(url)
-    // 处理书签文件夹数据
+    const collectFavor = collectUrls.find(i => i.url === url)
+    const hasFavor = Boolean(collectFavor)
+
     if (hasFavor) {
-      if (extentionDir?.children?.length) {
-        const marketId = extentionDir.children.find(i => i.url === url)?.id || ''
-        marketId && bookMarksUtils.removeBookMarks(marketId) // 移除书签
-      }
-    } else {
-      // 创建书签
-      const curTabs = windowTabs.find(i => i.windowId === activeTab)?.tabs || []
-      const title = curTabs.find(i => i.url === url)?.title || ''
-      let bookmarks = {
-        parentId: '1',
-        title,
-        url,
-      }
-      if (extentionDir) {
-        bookmarks.parentId = extentionDir.id
-        bookMarksUtils.createBookMarks(bookmarks)
-      } else {
-        const payload = {
-          parentId: '1',
-          title: import.meta.env.VITE_BOOKMARKS_DIR_NAME,
-        }
-        bookMarksUtils.createBookMarks(payload).then(res => {
-          this.setState({
-            extentionDir,
-          })
-          bookmarks.parentId = res.id
-          bookMarksUtils.createBookMarks(bookmarks)
-        })
-      }
-    }
-    if (isLogin) {
+      // 删除书签
+      const marketId = collectFavor.bookMarkId
+      marketId && bookMarksUtils.removeBookMarks(marketId)
       const payload = {
         url,
+        bookMarkId: marketId,
       }
+      this.updateCollectData('remove', payload)
+    } else {
+      // 创建书签
+      this.setState({
+        bookMarkItem: tab,
+        bookMarkPopShow: true,
+      })
+    }
+  }
+
+  // 创建书签回调
+  createBookMarksCb = async bookMarkId => {
+    const { bookMarkItem } = this.state
+    this.setState({
+      bookMarkPopShow: false,
+    })
+    const payload = {
+      url: bookMarkItem.url,
+      bookMarkId: bookMarkId,
+    }
+    this.updateCollectData('set', payload)
+  }
+
+  // 更新收藏数据
+  updateCollectData = async (type, payload) => {
+    const { isLogin } = this.state
+    if (isLogin) {
       urlCollect(payload).then(res => {
         Store.dispatch({
           type: 'set_collect',
@@ -309,11 +326,10 @@ class Home extends React.Component {
         })
       })
     } else {
-      // 游客模式存本地
-      if (hasFavor) {
-        await storageUtils.StorageArray.removeItem('collectData', url)
+      if (type === 'set') {
+        await storageUtils.StorageArray.setItem('collectData', payload)
       } else {
-        await storageUtils.StorageArray.setItem('collectData', url)
+        await storageUtils.StorageArray.removeItem('collectData', payload.url)
       }
       const collectData = await storageUtils.StorageArray.getItem('collectData')
       Store.dispatch({
@@ -322,6 +338,7 @@ class Home extends React.Component {
       })
     }
   }
+
   // 删除单个tab
   onTabDelete = (e, tab, domain, domainValues) => {
     e.stopPropagation()
@@ -524,23 +541,6 @@ class Home extends React.Component {
         type: 'get_bookmarks',
         payload: marksData,
       })
-      // 查询是否有插件创建的收藏夹
-      const hasExtentionDir = function (marksData) {
-        for (let i = 0; i < marksData.length; i++) {
-          const mark = marksData[i]
-          if (mark.title === import.meta.env.VITE_BOOKMARKS_DIR_NAME) {
-            return mark
-          } else if (mark?.children?.length) {
-            return hasExtentionDir(mark.children)
-          }
-        }
-      }
-      const result = hasExtentionDir(marksData)
-      if (result) {
-        this.setState({
-          extentionDir: result,
-        })
-      }
     })
   }
 
@@ -626,7 +626,7 @@ class Home extends React.Component {
     })
   }
   render() {
-    const { windowTabs, curTabData, activeTab, expandkeys, collectUrls, currentWindowTab } = this.state
+    const { windowTabs, bookMarkPopShow, bookMarkItem, curTabData, activeTab, expandkeys, collectUrls, currentWindowTab } = this.state
     return (
       <div className='home-wrapper'>
         {/* 搜索当前窗口 */}
@@ -752,7 +752,16 @@ class Home extends React.Component {
           )}
         </div>
         {activeTab && String(activeTab).includes('templId') && <CreateNewWindow></CreateNewWindow>}
-        {/* {isShowTodo && <TodoList></TodoList>} */}
+        {bookMarkPopShow && (
+          <BookMarkPop
+            isVisible={bookMarkPopShow}
+            tabData={bookMarkItem}
+            toggleModal={() => {
+              this.setState({ bookMarkPopShow: false })
+            }}
+            createBookMarks={this.createBookMarksCb}
+          ></BookMarkPop>
+        )}
       </div>
     )
   }

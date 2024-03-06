@@ -1,4 +1,3 @@
-import { mockUserCollect } from '@/api/user'
 import { getDeepKeys, hasToken } from '@/utils.js'
 // 用户模块
 
