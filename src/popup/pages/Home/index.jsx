@@ -1,5 +1,5 @@
 import './index.less'
-import { Tabs, Input, Collapse, Badge, Button } from 'antd'
+import { Tabs, Input, Collapse, Popconfirm, Avatar, Badge, Button } from 'antd'
 import { useNavigate } from 'react-router-dom'
 import React from 'react'
 import {
@@ -7,12 +7,14 @@ import {
   HeartFilled,
   HeartOutlined,
   FieldTimeOutlined,
-  UserOutlined,
+  UserAddOutlined,
+  UserSwitchOutlined,
   CopyOutlined,
   FormOutlined,
   MenuUnfoldOutlined,
   ArrowsAltOutlined,
   EyeOutlined,
+  CaretDownOutlined,
   CaretRightOutlined,
 } from '@ant-design/icons'
 import TabUtils from '@/extentionUtils/tabUtils.js'
@@ -100,12 +102,12 @@ const operations = [
     label: '查看/创建网页组',
     visible: true,
   },
-  {
-    key: 'login',
-    icon: <UserOutlined />,
-    label: '登录/注册',
-    visible: false,
-  },
+  // {
+  //   key: 'login',
+  //   icon: <UserOutlined />,
+  //   label: '登录/注册',
+  //   visible: false,
+  // },
   {
     key: 'later',
     icon: <FieldTimeOutlined />,
@@ -142,9 +144,9 @@ class Home extends React.Component {
     const { windowTabs, isLogin, userinfo, hasCombineDomain, activeTab } = this.state
     operations.forEach(btn => {
       // 登录按钮
-      if (btn.key === 'login') {
-        btn.visible = !isLogin
-      }
+      // if (btn.key === 'login') {
+      //   btn.visible = !isLogin
+      // }
       if (btn.key === 'combine-tab') {
         const allTabs = windowTabs.find(i => i.windowId === activeTab)?.tabs || []
         const { hasRepeat } = windowHasRepeatTab(allTabs, false)
@@ -625,14 +627,36 @@ class Home extends React.Component {
       [type]: visible,
     })
   }
+
+  confirmout = async () => {
+    await storageUtils.removeStorageItem('token')
+    Store.dispatch({
+      type: 'get_user',
+      payload: {
+        collectUrls: [],
+      },
+    })
+  }
   render() {
-    const { windowTabs, bookMarkPopShow, bookMarkItem, curTabData, activeTab, expandkeys, collectUrls, currentWindowTab } = this.state
+    const { windowTabs, bookMarkPopShow, bookMarkItem, curTabData, activeTab, expandkeys, collectUrls, isLogin, currentWindowTab } = this.state
+    const userInfo = this.state.userinfo?.userinfo || {}
     return (
       <div className='home-wrapper'>
         {/* 搜索当前窗口 */}
         <div className='search-wrapper flex-x-start flex-y-center'>
-          <Search placeholder='请输入Tab名称或者网址链接' allowClear enterButton='搜索' size='large' className='flex' onSearch={this.onSearch} />
+          <Search placeholder='请输入Tab名称或者网址链接' allowClear enterButton='搜索' className='flex' onSearch={this.onSearch} />
           {/* TODO 开放所有tab搜索 */}
+          {
+            <div className='user flex-mcenter'>
+              {isLogin ? (
+                <Popconfirm onConfirm={this.confirmout} description={`确定要退出${userInfo.mail}吗？`} okText='Yes' cancelText='No'>
+                  <UserSwitchOutlined className='avatar' size='large' />
+                </Popconfirm>
+              ) : (
+                <UserAddOutlined className='avatar' size='large' onClick={() => this.onOperationClick({ key: 'login' })} />
+              )}
+            </div>
+          }
           {/* <Switch onChange={this.onSwitchChange} /> */}
         </div>
         {/* 操作按钮 */}
@@ -692,7 +716,9 @@ class Home extends React.Component {
           {Boolean(Object.entries(currentWindowTab)?.length) && (
             <Collapse
               activeKey={expandkeys}
-              expandIcon={() => <CaretRightOutlined />}
+              expandIcon={({ isActive }) => {
+                return isActive ? <CaretDownOutlined /> : <CaretRightOutlined />
+              }}
               onChange={this.collapseChange}
               items={Object.entries(currentWindowTab).map(([domain, domainValues]) => {
                 const overTabOne = domainValues.tabs.length > 1

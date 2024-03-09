@@ -47,7 +47,9 @@ export const getCurrentTab = () => {
         tabs => resolve(tabs[0])
       )
     } else {
-      resolve(1)
+      resolve({
+        id: 973095265,
+      })
     }
   })
 }

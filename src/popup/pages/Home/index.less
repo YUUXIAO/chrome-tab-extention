@@ -7,6 +7,26 @@
   box-sizing: border-box;
 }
 
+.user {
+  width: 60px;
+  .status {
+    font-size: 12px;
+    width: 100%;
+  }
+
+  .avatar {
+    font-size: 26px;
+    height: 28px;
+    width: 28px;
+    border-radius: 50%;
+    text-align: center;
+    display: flex;
+    color: #666;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
 .combine-btn {
   margin-right: 6px;
   margin-bottom: 10px;
@@ -28,7 +48,7 @@
   width: 18px;
   height: 18px;
   margin-right: 8px;
-  border-radius: 50%;
+  // border-radius: 50%;
   background-color: #efefef;
   display: inline-block;
   overflow: hidden;
@@ -47,14 +67,12 @@
 
 .tab-one {
   font-size: 13px;
-
+  // border: 1px solid red;
   cursor: pointer;
-  padding: 0;
+  padding: 4px 12px;
+  // padding: 0;
   box-sizing: border-box;
   border-bottom: 1px dashed #eee;
-  &.current {
-    background: paleturquoise;
-  }
 
   &:last-child {
     border-bottom: 0;
@@ -63,19 +81,16 @@
   .title {
     color: @color-text;
     flex: 1;
-
-    // border: 1px solid green;
   }
   .sub-domain {
     color: #aaa;
-    // border: 1px solid pink;
     font-size: 10px;
   }
 
   .action {
     // padding-right: 10px;
     width: 50px;
-    color: #b1b3b8;
+    color: #ccc;
     height: 100%;
     // font-size: 20px;
 
@@ -90,6 +105,9 @@
         // color: #f0a843;
       }
     }
+  }
+  &.current {
+    background: #d9e4f8;
   }
 }
 
@@ -126,10 +144,14 @@
 }
 
 .ant-collapse > .ant-collapse-item > .ant-collapse-header {
-  padding: 4px 12px;
+  padding: 6px 12px;
+  background: #f6f7fa;
 }
 .ant-collapse .ant-collapse-content > .ant-collapse-content-box {
-  padding: 10px 12px;
+  padding: 0;
+}
+.ant-collapse > .ant-collapse-item > .ant-collapse-header .ant-collapse-expand-icon {
+  padding-inline-end: 6px;
 }
 
 .ant-select-dropdown {
@@ -137,11 +159,25 @@
 }
 
 .ant-collapse-item-disabled {
+  .ant-collapse-header {
+    padding: 0 !important;
+    background: #fff !important;
+  }
+
   .ant-collapse-content-box {
     padding: 0 !important;
     border-width: 0 !important;
   }
 }
+.ant-collapse {
+  border-color: #eee;
+  margin-top: 10px;
+}
 .ant-collapse .ant-collapse-item-disabled .ant-collapse-content {
   border: none;
+}
+
+.ant-collapse > .ant-collapse-item:last-child,
+.ant-collapse > .ant-collapse-item:last-child > .ant-collapse-header {
+  border-radius: 0;
 }
