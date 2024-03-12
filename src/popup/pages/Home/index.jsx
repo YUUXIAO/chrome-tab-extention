@@ -1,5 +1,5 @@
 import './index.less'
-import { Tabs, Input, Collapse, Popconfirm, Avatar, Badge, Button } from 'antd'
+import { Tabs, Input, Collapse, Popconfirm, Checkbox, Badge, Button } from 'antd'
 import { useNavigate } from 'react-router-dom'
 import React from 'react'
 import {
@@ -9,7 +9,9 @@ import {
   FieldTimeOutlined,
   UserAddOutlined,
   UserSwitchOutlined,
+  EditOutlined,
   CopyOutlined,
+  CloseOutlined,
   FormOutlined,
   MenuUnfoldOutlined,
   ArrowsAltOutlined,
@@ -25,6 +27,7 @@ import bookMarksUtils from '@/extentionUtils/bookmarks.js'
 import storageUtils from '@/extentionUtils/storage'
 import CreateNewWindow from '../components/createNewWindow'
 import Store from '@/store/index'
+import { setUserInfo, saveReducer, addCollect } from '@/store/action.js'
 
 const { Search } = Input
 // TODO 抽出一个类的实现
@@ -35,13 +38,14 @@ export const withNavigation = Component => {
 
 class DomainOne extends React.Component {
   render() {
-    const { tabData, favorUrls, domain, domainValues, curTabData } = this.props
+    const { tabData, favorUrls, isOpenCheck, domain, domainValues, curTabData } = this.props
     return (
       <div
         key={tabData.id}
         className={`tab-one domain-header flex-y-center flex-x-between ${curTabData.id === tabData.id ? 'current' : ''}`}
         onClick={e => this.props.tabClick(e, tabData)}
       >
+        {isOpenCheck && <Checkbox className='mr10' onChange={e => this.props.toggleStatus(e, tabData.id)} />}
         <img
           alt={tabData.title}
           onError={e => {
@@ -122,7 +126,8 @@ class Home extends React.Component {
     super(props)
     this.state = {
       curTabData: {},
-
+      isOpenCheck: false, // 是否多选
+      selectIds: new Set(),
       // extentionDir: null,
       userinfo: {},
       bookMarkItem: {}, // 当前操作的书签数据
@@ -134,7 +139,6 @@ class Home extends React.Component {
       currentWindowTab: {}, // 当前窗口域名键值对
       expandkeys: [],
       isShowLater: false,
-      // loginWindowId: Store.getState().user.loginWindowId,
       isLogin: Store.getState().user.isLogin,
       collectUrls: Store.getState().user.collectUrls, //收藏信息
     }
@@ -192,10 +196,7 @@ class Home extends React.Component {
     getUserInfo()
       .then(res => {
         const { userinfo } = res.data
-        Store.dispatch({
-          type: 'get_user',
-          payload: userinfo,
-        })
+        Store.dispatch(setUserInfo(userinfo))
         this.setState({
           userinfo: res.data,
         })
@@ -211,8 +212,7 @@ class Home extends React.Component {
           },
         })
         if (collectData?.length) {
-          console.log('本地有收藏数据', collectData)
-          const isOldData = collectData.find(i => typeof i === 'string')
+          const isOldData = collectData?.find(i => typeof i === 'string')
           if (isOldData) {
             collectData = collectData.map(i => {
               return {
@@ -221,13 +221,11 @@ class Home extends React.Component {
               }
             })
           }
-
-          Store.dispatch({
-            type: 'get_user',
-            payload: {
+          Store.dispatch(
+            setUserInfo({
               collectUrls: collectData,
-            },
-          })
+            })
+          )
         }
       })
   }
@@ -272,14 +270,47 @@ class Home extends React.Component {
     const { windowTabs } = this.state
     this.updateWindow(winId, windowTabs)
   }
-  // 切换tab
+  // 打开多选
+  openCheck = () => {
+    this.setState({
+      isOpenCheck: true,
+    })
+  }
+  // 删除选中tab
+  deleteMultiple = async () => {
+    const { selectIds } = this.state
+    if (selectIds.size) {
+      const ids = Array.from(selectIds)
+      await TabUtils.deleteTab(ids)
+      this.getAllWindows()
+    }
+    selectIds.clear()
+    this.setState({
+      selectIds,
+      isOpenCheck: false,
+    })
+  }
+  // 切换tab选中状态
+  toggleStatus = (e, tabId) => {
+    e && e.stopPropagation()
+    const { selectIds } = this.state
+
+    if (selectIds.has(tabId)) {
+      selectIds.delete(tabId)
+    } else {
+      selectIds.add(tabId)
+    }
+  }
+  // 点击tab
   tabClick = (e, tab) => {
+    if (this.state.isOpenCheck) return
     e.stopPropagation()
     TabUtils.toggleTab(tab, this.state.activeTab)
   }
 
   // 收藏tab
   onTabCollect = async (e, tab) => {
+    if (this.state.isOpenCheck) return
     e.stopPropagation()
     const { collectUrls } = this.state
     const { url } = tab
@@ -322,10 +353,7 @@ class Home extends React.Component {
     const { isLogin } = this.state
     if (isLogin) {
       urlCollect(payload).then(res => {
-        Store.dispatch({
-          type: 'set_collect',
-          payload: res.data,
-        })
+        Store.dispatch(addCollect(res.data))
       })
     } else {
       if (type === 'set') {
@@ -334,15 +362,13 @@ class Home extends React.Component {
         await storageUtils.StorageArray.removeItem('collectData', payload.url)
       }
       const collectData = await storageUtils.StorageArray.getItem('collectData')
-      Store.dispatch({
-        type: 'set_collect',
-        payload: collectData,
-      })
+      Store.dispatch(addCollect(collectData))
     }
   }
 
   // 删除单个tab
   onTabDelete = (e, tab, domain, domainValues) => {
+    if (this.state.isOpenCheck) return
     e.stopPropagation()
     TabUtils.deleteTab(tab.id)
     // 更新域名下的数据
@@ -539,10 +565,7 @@ class Home extends React.Component {
   getAllBookMarks = () => {
     bookMarksUtils.getAllBookMarks().then(bookMarks => {
       const marksData = bookMarks[0].children || []
-      Store.dispatch({
-        type: 'get_bookmarks',
-        payload: marksData,
-      })
+      Store.dispatch(saveReducer(marksData))
     })
   }
 
@@ -630,12 +653,7 @@ class Home extends React.Component {
 
   confirmout = async () => {
     await storageUtils.removeStorageItem('token')
-    Store.dispatch({
-      type: 'get_user',
-      payload: {
-        collectUrls: [],
-      },
-    })
+    Store.dispatch(setUserInfo({ collectUrls: [] }))
   }
   render() {
     const { windowTabs, bookMarkPopShow, bookMarkItem, curTabData, activeTab, expandkeys, collectUrls, isLogin, currentWindowTab } = this.state
@@ -711,6 +729,14 @@ class Home extends React.Component {
           })}
           onChange={this.onChange}
         ></Tabs>
+        <div className='window-operation flex-x-start flex-y-center'>
+          {!this.state.isOpenCheck && (
+            <EditOutlined className='select icon' size='large' onClick={e => this.openCheck()}>
+              多选
+            </EditOutlined>
+          )}
+          {this.state.isOpenCheck && <CloseOutlined className='delete icon' onClick={() => this.deleteMultiple()} />}
+        </div>
         {/* 列表 */}
         <div className='list-content'>
           {Boolean(Object.entries(currentWindowTab)?.length) && (
@@ -744,6 +770,8 @@ class Home extends React.Component {
                     </div>
                   ) : (
                     <DomainOne
+                      isOpenCheck={this.state.isOpenCheck}
+                      selectIds={this.state.selectIds}
                       tabData={domainValues.tabs[0]}
                       favorUrls={collectUrls}
                       domain={domain}
@@ -752,6 +780,7 @@ class Home extends React.Component {
                       onTabCollect={this.onTabCollect}
                       tabClick={this.tabClick}
                       onTabDelete={this.onTabDelete}
+                      toggleStatus={this.toggleStatus}
                     ></DomainOne>
                   ),
                   children:
@@ -759,6 +788,8 @@ class Home extends React.Component {
                     domainValues.tabs.map((tab, tabIdx) => {
                       return (
                         <DomainOne
+                          isOpenCheck={this.state.isOpenCheck}
+                          selectIds={this.state.selectIds}
                           tabData={tab}
                           favorUrls={collectUrls}
                           domain={domain}
@@ -767,6 +798,7 @@ class Home extends React.Component {
                           domainValues={domainValues}
                           onTabCollect={this.onTabCollect}
                           tabClick={this.tabClick}
+                          toggleStatus={this.toggleStatus}
                           onTabDelete={this.onTabDelete}
                         ></DomainOne>
                       )

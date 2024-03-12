@@ -1,6 +1,7 @@
 import axios from 'axios'
 import storageUtils from '@/extentionUtils/storage'
 import Store from '@/store/index'
+import { setUserInfo } from '@/store/action.js'
 
 axios.defaults.baseURL = import.meta.env.VITE_BASE_URL
 axios.defaults.timeout = 10000
@@ -33,10 +34,7 @@ axios.interceptors.response.use(
       switch (error.response.status) {
         case 401:
         case 403:
-          Store.dispatch({
-            type: 'get_user',
-            payload: {},
-          })
+          Store.dispatch(setUserInfo({}))
           break
 
         default:

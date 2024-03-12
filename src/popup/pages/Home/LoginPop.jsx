@@ -91,16 +91,6 @@ class LoginPop extends React.Component {
         const currentWindowId = await tabUtils.getCurrentWindowId()
         tabUtils.deleteWindow(Number(currentWindowId))
         storageUtils.removeStorageItem('loginWindowId')
-
-        // 保存用户信息到store
-        // Store.dispatch({
-        //   type: 'get_user',
-        //   payload: {
-        //     token,
-        //     userId,
-        //     ...data,
-        //   },
-        // })
       })
       .catch(err => {
         this.setState({

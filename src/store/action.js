@@ -1,17 +1,20 @@
-export const increaseAction = text => {
-  return { type: 'increase', text }
+// 添加收藏
+export const addCollect = payload => {
+  return { type: 'set_collect', payload }
 }
 
-export const decreaseAction = text => {
-  return { type: 'decrease', text }
+// 设置用户信息
+export const setUserInfo = payload => {
+  return { type: 'get_user', payload }
 }
 
-export const subTest = text => {
-  return { type: 'test', text }
+// 设置登录窗口信息
+export const setLoginWindow = payload => {
+  return { type: 'get_loginWindow', payload }
 }
 
-//返回一个action对象，用来关联对应的reducer，将data保存到store。
-export const saveReducer = data => ({
-  type: 'SAVE_REDUCER',
-  data,
+// 获取书签栏
+export const saveReducer = payload => ({
+  type: 'get_bookmarks',
+  payload,
 })

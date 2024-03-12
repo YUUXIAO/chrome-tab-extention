@@ -37,7 +37,7 @@ export const mockTabsData = [
     groupId: -1,
     height: 632,
     highlighted: false,
-    id: 973095265,
+    id: 9730952651,
     incognito: false,
     index: 4,
     mutedInfo: {

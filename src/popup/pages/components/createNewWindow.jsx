@@ -2,7 +2,6 @@ import React from 'react'
 import { Form, Button, Select, Input } from 'antd'
 import Store from '@/store/index'
 import TabUtils from '@/extentionUtils/tabUtils.js'
-import { mockUserCollect } from '@/api/user'
 
 class CreateNewWindowCom extends React.Component {
   formRef = React.createRef()
@@ -15,17 +14,11 @@ class CreateNewWindowCom extends React.Component {
     }
   }
   componentDidMount() {
-    Store.dispatch({
-      type: 'favor_add',
-      payload: mockUserCollect,
-    })
-
     // 获取搜索历史记录
     // TODO
     // chrome.history.search({ text: "" }, (val) => {
     //   console.error("获取搜索历史记录", val)
     // })
-
     // const userStore = Store.getState().user
     // Store.subscribe(() => {
     //   this.setState({
