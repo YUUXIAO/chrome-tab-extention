@@ -63,6 +63,7 @@ class LoginPop extends React.Component {
     const collectData = await storageUtils.StorageArray.getItem('collectData')
     const laterData = await storageUtils.StorageArray.getItem('laterData')
     const todoData = await storageUtils.StorageArray.getItem('todoKeys')
+    const urlGroups = await storageUtils.StorageArray.getItem('urlGroups')
     const data = {
       mail: email,
       code,
@@ -76,6 +77,17 @@ class LoginPop extends React.Component {
     if (todoData?.length) {
       data.todoData = todoData
     }
+
+    if (urlGroups?.length) {
+      // 去掉本地的_id
+      const filterData = urlGroups.map(i => {
+        const { _id, ...other } = i
+        return {
+          ...other,
+        }
+      })
+      data.urlGroups = filterData
+    }
     userLogin(data)
       .then(async res => {
         const { token } = res.data
@@ -85,6 +97,9 @@ class LoginPop extends React.Component {
         }
         if (laterData?.length) {
           storageUtils.removeStorageItem('laterData')
+        }
+        if (urlGroups?.length) {
+          await storageUtils.removeStorageItem('urlGroups')
         }
 
         // 关闭这个窗口

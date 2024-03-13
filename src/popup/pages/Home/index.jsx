@@ -103,7 +103,7 @@ const operations = [
   {
     key: 'create-tag',
     icon: <EyeOutlined />,
-    label: '查看/创建网页组',
+    label: '网页组',
     visible: true,
   },
   // {
@@ -480,10 +480,10 @@ class Home extends React.Component {
         this.props.navigate('/popup/todoKeys')
         break
       case 'create-tag':
-        if (!this.state.isLogin) {
-          alert('请先登录再使用此功能')
-          return
-        }
+        // if (!this.state.isLogin) {
+        //   alert('请先登录再使用此功能')
+        //   return
+        // }
         this.props.navigate('/popup/urlGroup')
         break
       case 'later':
@@ -574,7 +574,7 @@ class Home extends React.Component {
     const ajaxArray = [TabUtils.getAllWindow(), TabUtils.getTabLists(), TabUtils.getCurrentWindowId(), TabUtils.getCurrentTab()]
     const [windows, allTabs, curWindowId, curTabData] = await Promise.all(ajaxArray)
     const windowNames = (await storageUtils.getStorageItem('windowName')) || {}
-
+    console.error('获取所有tabs', allTabs)
     const windowTabs = [] // 所有窗口数据
     let activeWindowTabs = [] // 活跃窗口数据
 
@@ -664,6 +664,7 @@ class Home extends React.Component {
         <div className='search-wrapper flex-x-start flex-y-center'>
           <Search placeholder='请输入Tab名称或者网址链接' allowClear enterButton='搜索' className='flex' onSearch={this.onSearch} />
           {/* TODO 开放所有tab搜索 */}
+          {/* 登入/登出 */}
           {
             <div className='user flex-mcenter'>
               {isLogin ? (

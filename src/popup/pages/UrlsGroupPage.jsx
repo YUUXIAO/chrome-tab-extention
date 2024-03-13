@@ -1,15 +1,16 @@
 import React from 'react'
-import { Form, Button, Modal, Checkbox, Tabs, List, Tag, Space, Alert, Input, Cascader } from 'antd'
+import { Form, Button, Modal, Switch, Checkbox, Tabs, List, Space, Alert, Input, Cascader } from 'antd'
 
 import Store from '@/store/index'
 import TabUtils from '@/extentionUtils/tabUtils.js'
 import { createUrlTag, getUrlTags } from '@/api/user'
 import { CopyOutlined, PlusOutlined } from '@ant-design/icons'
+import storageUtils from '@/extentionUtils/storage.js'
 
 import './urlsGroupPage.less'
-
 class CreateModal extends React.Component {
   formRef = React.createRef()
+
   constructor(props) {
     super(props)
     this.state = {
@@ -17,18 +18,20 @@ class CreateModal extends React.Component {
       isShowMessage: false,
       errorMessage: '',
       formData: {
+        isNewWindow: false,
         collect: [],
       }, // 表单信息
+      isLogin: Store.getState().user.isLogin,
       favorUrlMaps: Store.getState().user.allBookmarks, // 书签收藏
     }
   }
 
   // 获取快捷链接
-  changeFiled1 = (filed, value, options) => {
+  changeFiled = (filed, value, options) => {
     const { formData, enterurls } = this.state
-    if (typeof filed === 'number') {
-      // enterurls[filed] = value
 
+    if (typeof filed === 'number') {
+      // 索引值
       const a = enterurls.map((url, idx) => {
         if (idx === filed) return value
         return url
@@ -46,8 +49,6 @@ class CreateModal extends React.Component {
             url: val.url,
           }
         })
-      } else {
-        formData[filed] = value
       }
       this.setState({
         formData: formData,
@@ -63,10 +64,19 @@ class CreateModal extends React.Component {
   }
 
   createNewTag = async () => {
-    const { formData, enterurls = [] } = this.state
+    const { formData, enterurls = [], isLogin } = this.state
     await this.formRef.current.validateFields()
+    const { name, isNewWindow } = this.formRef.current.getFieldsValue()
+    // 合并手输域名和选项的
+    let enterurlmap = []
+    const hasEnter = enterurls.filter(i => Boolean(i.trim()))
+    if (hasEnter?.length) {
+      enterurlmap = enterurls.map(i => {
+        return { title: '手动添加网址', url: i }
+      })
+    }
 
-    const urls = Array.from(new Set([...enterurls, ...(formData.collect || [])])).filter(i => i)
+    const urls = Array.from(new Set([...enterurlmap, ...(formData.collect || [])])).filter(i => i)
     if (urls.length < 1) {
       this.setState({
         isShowMessage: true,
@@ -75,19 +85,28 @@ class CreateModal extends React.Component {
     }
     const params = {
       urls,
-      name: formData.name,
+      isNewWindow,
+      createTime: Date.now(),
+      name,
     }
-    createUrlTag(params)
-      .then(res => {
-        this.props.initpage()
-        this.props.cancel()
-      })
-      .catch(err => {
-        this.setState({
-          isShowMessage: true,
-          errorMessage: err?.data?.msg || err.data.data,
+    if (isLogin) {
+      createUrlTag(params)
+        .then(() => {
+          this.props.initpage()
+          this.props.cancel()
         })
-      })
+        .catch(err => {
+          this.setState({
+            isShowMessage: true,
+            errorMessage: err?.data?.msg || err.data.data,
+          })
+        })
+    } else {
+      params['_id'] = Date.now()
+      await storageUtils.StorageArray.setItem('urlGroups', params)
+      this.props.initpage()
+      this.props.cancel()
+    }
   }
 
   alertClose = () => {
@@ -111,13 +130,13 @@ class CreateModal extends React.Component {
             ref={this.formRef}
           >
             <Form.Item label='名称' name='name' rules={[{ required: true, message: '请输入名称' }]}>
-              <Input placeholder='请输入名称' type='text' onChange={e => this.changeFiled1('name', e.target.value)} />
+              <Input placeholder='请输入名称' type='text' onChange={e => this.changeFiled('name', e.target.value)} />
             </Form.Item>
             {enterurls.map((url, idx) => {
               return (
                 <Form.Item label='域名' key={idx}>
                   <Space.Compact>
-                    <Input placeholder='请输入域名' type='text' value={url} onChange={e => this.changeFiled1(idx, e.target.value)} />
+                    <Input placeholder='请输入域名' type='text' value={url} onChange={e => this.changeFiled(idx, e.target.value)} />
                     {idx === enterurls.length - 1 && (
                       <Button onClick={this.addEnterUrl} type='primary'>
                         添加
@@ -137,12 +156,15 @@ class CreateModal extends React.Component {
                 }}
                 showCheckedStrategy='SHOW_CHILD'
                 multiple
-                onChange={(value, opt) => this.changeFiled1('collect', value, opt)}
+                onChange={(value, opt) => this.changeFiled('collect', value, opt)}
                 placeholder='选择收藏网址'
                 showSearch
                 options={favorUrlMaps}
                 mode='multiple'
               />
+            </Form.Item>
+            <Form.Item label='是否新窗口开启' name='isNewWindow'>
+              <Switch></Switch>
             </Form.Item>
             <Form.Item className='flex-x-center'>
               <Button size='large' type='primary' onClick={this.createNewTag}>
@@ -167,21 +189,33 @@ class UrlsGroupPage extends React.Component {
       isShowCreate: false,
       openIds: [],
       currentTagUrls: [],
+      isLogin: Store.getState().user.isLogin,
     }
   }
   componentDidMount() {
     this.getUserGroups()
   }
 
-  getUserGroups = () => {
-    getUrlTags().then(res => {
-      const allUrlTags = res?.data || []
-      this.setState({
-        allUrlTags,
-        activeTag: allUrlTags[0]?._id || '',
-        currentTagUrls: allUrlTags[0]?.urls || [],
+  // 获取所有网页组
+  getUserGroups = async () => {
+    const { isLogin } = this.state
+    if (isLogin) {
+      getUrlTags().then(res => {
+        const allUrlTags = res?.data || []
+        this.setState({
+          allUrlTags,
+          activeTag: allUrlTags[0]?._id || '',
+          currentTagUrls: allUrlTags[0]?.urls || [],
+        })
       })
-    })
+    } else {
+      const result = await storageUtils.StorageArray.getItem('urlGroups')
+      this.setState({
+        allUrlTags: result,
+        activeTag: result[0]?._id || '',
+        currentTagUrls: result[0]?.urls || [],
+      })
+    }
   }
 
   showCreateModal = visible => {
@@ -217,20 +251,36 @@ class UrlsGroupPage extends React.Component {
   // 批量打开窗口
   confirmOpen = () => {
     const { openIds, allUrlTags } = this.state
-    let createUrls = []
+    let combineCreateUrls = [] // 合并的数据
+    let signleWindow = [] // 单独的窗口打开
     openIds.forEach(id => {
       const result = allUrlTags.find(i => i._id === id)
-
       if (result) {
-        const urls = result.urls.map(i => i.url)
-        createUrls = [...createUrls, ...urls]
+        const { isNewWindow = false } = result
+        const urls = result.urls.map(i => i?.url || '')
+        if (isNewWindow) {
+          signleWindow = [...signleWindow, { urls }]
+        } else {
+          combineCreateUrls = [...combineCreateUrls, ...urls]
+        }
       }
     })
-
-    const createData = {
-      url: createUrls,
+    // 单窗口打开
+    if (signleWindow?.length) {
+      signleWindow.forEach(win => {
+        const createData = {
+          url: win.urls,
+        }
+        TabUtils.createNewWindow(createData)
+      })
     }
-    TabUtils.createNewWindow(createData)
+    // 合并其他数据
+    if (combineCreateUrls?.length) {
+      const createData = {
+        url: combineCreateUrls,
+      }
+      TabUtils.createNewWindow(createData)
+    }
   }
 
   render() {
@@ -267,23 +317,25 @@ class UrlsGroupPage extends React.Component {
               </Button>
             )}
           </div>
-          <Tabs
-            items={allUrlTags.map((item, index) => {
-              return {
-                label: (
-                  <div>
-                    {isShowCheckbox && (
-                      <Checkbox size='small' className='mr10' key={item._id} onChange={e => this.checkboxChange(e, item)}></Checkbox>
-                    )}
-                    {item.name}
-                  </div>
-                ),
-                key: item._id,
-              }
-            })}
-            activeKey={activeTag}
-            onChange={this.tabChange}
-          />
+          {Boolean(allUrlTags?.length) && (
+            <Tabs
+              items={allUrlTags.map((item, index) => {
+                return {
+                  label: (
+                    <div>
+                      {isShowCheckbox && (
+                        <Checkbox size='small' className='mr10' key={item._id} onChange={e => this.checkboxChange(e, item)}></Checkbox>
+                      )}
+                      {item.name}
+                    </div>
+                  ),
+                  key: item._id,
+                }
+              })}
+              activeKey={activeTag}
+              onChange={this.tabChange}
+            />
+          )}
           <List
             dataSource={currentTagUrls}
             renderItem={item => (
