@@ -1,12 +1,16 @@
 import './index.less'
-import { Tabs, Input, Collapse, Popconfirm, Checkbox, Badge, Button } from 'antd'
+import { Tabs, Input, Collapse, Popconfirm, Image, Checkbox, Badge, Button } from 'antd'
 import { useNavigate } from 'react-router-dom'
 import React from 'react'
+import QRCode from 'qrcode'
+
 import {
+  FundViewOutlined,
   DeleteOutlined,
   HeartFilled,
   HeartOutlined,
   FieldTimeOutlined,
+  FolderOpenOutlined,
   UserAddOutlined,
   UserSwitchOutlined,
   EditOutlined,
@@ -15,7 +19,6 @@ import {
   FormOutlined,
   MenuUnfoldOutlined,
   ArrowsAltOutlined,
-  EyeOutlined,
   CaretDownOutlined,
   CaretRightOutlined,
 } from '@ant-design/icons'
@@ -37,6 +40,25 @@ export const withNavigation = Component => {
 }
 
 class DomainOne extends React.Component {
+  constructor() {
+    super()
+    this.state = {
+      poster: '',
+    }
+  }
+  createPoster(e, url) {
+    e.stopPropagation()
+    QRCode.toDataURL(url)
+      .then(data => {
+        console.log('成功过', data)
+        this.setState({
+          poster: data,
+        })
+      })
+      .catch(err => {
+        console.error(err)
+      })
+  }
   render() {
     const { tabData, favorUrls, isOpenCheck, domain, domainValues, curTabData } = this.props
     return (
@@ -60,6 +82,19 @@ class DomainOne extends React.Component {
           <div className='sub-domain app-oneline'>{tabData.url}</div>
         </div>
         <div className='action flex-x-end'>
+          <Popconfirm
+            icon={null}
+            title=''
+            showCancel={false}
+            onConfirm={() => {
+              console.log(1)
+            }}
+            description={() => {
+              return <Image width={200} src={this.state.poster} />
+            }}
+          >
+            <FundViewOutlined className='action-icon' onClick={e => this.createPoster(e, tabData.url)} />
+          </Popconfirm>
           {/* 收藏按钮 */}
           {favorUrls.find(i => i?.url === tabData.url) ? (
             <HeartFilled className='action-icon star-filled' onClick={e => this.props.onTabCollect(e, tabData)} />
@@ -94,24 +129,18 @@ const operations = [
     visible: true,
   },
   {
+    key: 'create-tag',
+    icon: <FolderOpenOutlined />,
+    label: '网页组',
+    visible: true,
+  },
+  {
     key: 'todo',
     icon: <FormOutlined />,
     label: '记事本',
     count: 0,
     visible: true,
   },
-  {
-    key: 'create-tag',
-    icon: <EyeOutlined />,
-    label: '网页组',
-    visible: true,
-  },
-  // {
-  //   key: 'login',
-  //   icon: <UserOutlined />,
-  //   label: '登录/注册',
-  //   visible: false,
-  // },
   {
     key: 'later',
     icon: <FieldTimeOutlined />,
@@ -145,12 +174,8 @@ class Home extends React.Component {
   }
 
   get operationBtns() {
-    const { windowTabs, isLogin, userinfo, hasCombineDomain, activeTab } = this.state
+    const { windowTabs, userinfo, hasCombineDomain, activeTab } = this.state
     operations.forEach(btn => {
-      // 登录按钮
-      // if (btn.key === 'login') {
-      //   btn.visible = !isLogin
-      // }
       if (btn.key === 'combine-tab') {
         const allTabs = windowTabs.find(i => i.windowId === activeTab)?.tabs || []
         const { hasRepeat } = windowHasRepeatTab(allTabs, false)
@@ -172,6 +197,24 @@ class Home extends React.Component {
       }
     })
     return operations
+  }
+  get TabsOperation() {
+    const keys = ['expand', 'combine', 'combine-tab']
+    const result = this.operationBtns.filter(i => {
+      if (keys.includes(i.key)) {
+        return i
+      }
+    })
+    return result
+  }
+  get searchBarOpetion() {
+    const keys = ['todo', 'later', 'create-tag']
+    const result = this.operationBtns.filter(i => {
+      if (keys.includes(i.key)) {
+        return i
+      }
+    })
+    return result
   }
 
   clearData = () => {
@@ -246,6 +289,7 @@ class Home extends React.Component {
         activeKey: windowTabs[0].windowId,
       })
     } else {
+      alert('comming soon')
       // TODO 新增窗口
       // console.error('新增窗口22')
       // const hasTempWindow = windowTabs.find(i => Boolean(String(i.windowId).includes('templId')))
@@ -660,30 +704,42 @@ class Home extends React.Component {
     const userInfo = this.state.userinfo?.userinfo || {}
     return (
       <div className='home-wrapper'>
+        {/* <div className='header'>
+
+        </div> */}
         {/* 搜索当前窗口 */}
-        <div className='search-wrapper flex-x-start flex-y-center'>
-          <Search placeholder='请输入Tab名称或者网址链接' allowClear enterButton='搜索' className='flex' onSearch={this.onSearch} />
+        <div className='search-wrapper flex-x-between flex-y-center'>
+          <Search placeholder='Quick search' allowClear className='search-bar' onSearch={this.onSearch} />
           {/* TODO 开放所有tab搜索 */}
-          {/* 登入/登出 */}
-          {
-            <div className='user flex-mcenter'>
+          <div className='search-opt flex-x-end flex-y-center'>
+            {this.searchBarOpetion
+              .filter(btn => btn.visible)
+              .map(btn => {
+                return (
+                  <Badge className='badge' size='small' dot={btn.count > 0} color='red'>
+                    <div className='icon opt-item flex-mcenter' onClick={() => this.onOperationClick(btn)}>
+                      {btn.icon}
+                    </div>
+                  </Badge>
+                )
+              })}
+            {/* 登入/登出 */}
+            <div className='user flex-mcenter opt-item'>
               {isLogin ? (
                 <Popconfirm onConfirm={this.confirmout} description={`确定要退出${userInfo.mail}吗？`} okText='Yes' cancelText='No'>
-                  <UserSwitchOutlined className='avatar' size='large' />
+                  <UserSwitchOutlined className='icon' size='large' />
                 </Popconfirm>
               ) : (
-                <UserAddOutlined className='avatar' size='large' onClick={() => this.onOperationClick({ key: 'login' })} />
+                <UserAddOutlined className='icon' size='large' onClick={() => this.onOperationClick({ key: 'login' })} />
               )}
             </div>
-          }
+          </div>
           {/* <Switch onChange={this.onSwitchChange} /> */}
         </div>
         {/* 操作按钮 */}
-        {/* <Button onClick={this.clearData}></Button> */}
 
-        {this.operationBtns
-          .filter(btn => btn.visible)
-          .map(btn => {
+        <div className='outer-wrapper'>
+          {this.TabsOperation.filter(btn => btn.visible).map(btn => {
             return (
               <Button key={btn.key} size='small' icon={btn.icon} className='combine-btn' onClick={() => this.onOperationClick(btn)}>
                 <Badge size='small' dot={btn.count > 0} color='red'>
@@ -692,11 +748,31 @@ class Home extends React.Component {
               </Button>
             )
           })}
+          {!this.state.isOpenCheck && (
+            <Button key='select' size='small' icon={<EditOutlined />} className='combine-btn' onClick={e => this.openCheck()}>
+              多选
+            </Button>
+          )}
+          {this.state.isOpenCheck && (
+            <Button
+              key='select'
+              danger
+              type='dashed'
+              size='small'
+              icon={<CloseOutlined />}
+              className='combine-btn'
+              onClick={e => this.deleteMultiple()}
+            >
+              取消
+            </Button>
+          )}
+        </div>
         {/* 窗口Tabs */}
 
         <Tabs
           onEdit={this.onEdit}
           type='editable-card'
+          className='outer-wrapper'
           defaultActiveKey={windowTabs[0]?.windowId}
           activeKey={activeTab}
           items={windowTabs?.map((i, index) => {
@@ -730,16 +806,8 @@ class Home extends React.Component {
           })}
           onChange={this.onChange}
         ></Tabs>
-        <div className='window-operation flex-x-start flex-y-center'>
-          {!this.state.isOpenCheck && (
-            <EditOutlined className='select icon' size='large' onClick={e => this.openCheck()}>
-              多选
-            </EditOutlined>
-          )}
-          {this.state.isOpenCheck && <CloseOutlined className='delete icon' onClick={() => this.deleteMultiple()} />}
-        </div>
         {/* 列表 */}
-        <div className='list-content'>
+        <div className='list-content outer-wrapper'>
           {Boolean(Object.entries(currentWindowTab)?.length) && (
             <Collapse
               activeKey={expandkeys}
