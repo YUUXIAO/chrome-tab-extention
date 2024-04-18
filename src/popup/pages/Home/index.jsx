@@ -60,28 +60,21 @@ class DomainOne extends React.Component {
       })
   }
   render() {
-    const { tabData, favorUrls, isOpenCheck, domain, domainValues, curTabData } = this.props
+    const { tabData, favorUrls, selectIds, isOpenCheck, domain, domainValues, curTabData } = this.props
     return (
       <div
         key={tabData.id}
         className={`tab-one domain-header flex-y-center flex-x-between ${curTabData.id === tabData.id ? 'current' : ''}`}
         onClick={e => this.props.tabClick(e, tabData)}
       >
-        {isOpenCheck && <Checkbox className='mr10' onChange={e => this.props.toggleStatus(e, tabData.id)} />}
-        <img
-          alt={tabData.title}
-          onError={e => {
-            e.target.onerror = null
-            e.target.src = '/logo.png'
-          }}
-          className='domain-icon'
-          src={tabData.favIconUrl || ''}
-        ></img>
+        {isOpenCheck && <Checkbox className='mr10' checked={selectIds.has(tabData.id)} onChange={e => this.props.toggleStatus(e, tabData.id)} />}
+        <img alt={tabData.title} className='domain-icon' src={tabData.favIconUrl || ''}></img>
         <div className='title content-info'>
           <div className='app-oneline'>{tabData.title}</div>
           <div className='sub-domain app-oneline'>{tabData.url}</div>
         </div>
         <div className='action flex-x-end'>
+          {/* 手机扫码预览 */}
           <Popconfirm
             icon={null}
             title=''
@@ -148,6 +141,12 @@ const operations = [
     count: 0,
     visible: true,
   },
+  {
+    key: 'history',
+    icon: <FieldTimeOutlined />,
+    label: '历史记录里选择',
+    visible: true,
+  },
 ]
 
 class Home extends React.Component {
@@ -199,7 +198,7 @@ class Home extends React.Component {
     return operations
   }
   get TabsOperation() {
-    const keys = ['expand', 'combine', 'combine-tab']
+    const keys = ['expand', 'combine', 'combine-tab', 'history']
     const result = this.operationBtns.filter(i => {
       if (keys.includes(i.key)) {
         return i
@@ -224,6 +223,20 @@ class Home extends React.Component {
   async componentDidMount() {
     this.getUserInfo()
     this.getAllWindows()
+    chrome.history.search(
+      {
+        text: '', // 搜索的文本，留空则返回所有历史记录
+        startTime: 0,
+        maxResults: 100,
+      },
+      function (historyItems) {
+        for (var item of historyItems) {
+          console.log('访问的URL: ' + item.url)
+          console.log('访问时间: ' + item.lastVisitTime)
+        }
+      }
+    )
+
     this.getAllBookMarks()
 
     Store.subscribe(() => {
@@ -313,6 +326,10 @@ class Home extends React.Component {
   onChange = winId => {
     const { windowTabs } = this.state
     this.updateWindow(winId, windowTabs)
+    this.setState({
+      isOpenCheck: false,
+      selectIds: new Set(),
+    })
   }
   // 打开多选
   openCheck = () => {
@@ -328,22 +345,45 @@ class Home extends React.Component {
       await TabUtils.deleteTab(ids)
       this.getAllWindows()
     }
+    this.cancelMultiple()
+  }
+  // 取消多选
+  cancelMultiple = () => {
+    const { selectIds } = this.state
     selectIds.clear()
     this.setState({
       selectIds,
       isOpenCheck: false,
     })
   }
+  // 判断域名选中
+  getDomainCheck = tabs => {
+    const { selectIds } = this.state
+    const hasDiff = tabs.some(i => !selectIds.has(i.id))
+    return !hasDiff
+  }
   // 切换tab选中状态
   toggleStatus = (e, tabId) => {
     e && e.stopPropagation()
     const { selectIds } = this.state
-
-    if (selectIds.has(tabId)) {
-      selectIds.delete(tabId)
+    const isDomain = typeof tabId === 'object'
+    if (isDomain) {
+      // 判断全选
+      const isCheck = e.target.checked
+      const ids = tabId.map(i => i.id)
+      ids.forEach(id => {
+        isCheck ? selectIds.add(id) : selectIds.delete(id)
+      })
     } else {
-      selectIds.add(tabId)
+      if (selectIds.has(tabId)) {
+        selectIds.delete(tabId)
+      } else {
+        selectIds.add(tabId)
+      }
     }
+    this.setState({
+      selectIds,
+    })
   }
   // 点击tab
   tabClick = (e, tab) => {
@@ -519,6 +559,9 @@ class Home extends React.Component {
         break
       case 'combine-tab':
         this.windowTabCombine() // 合并窗口相同tab
+        break
+      case 'history':
+        this.props.navigate('/popup/history')
         break
       case 'todo':
         this.props.navigate('/popup/todoKeys')
@@ -754,17 +797,34 @@ class Home extends React.Component {
             </Button>
           )}
           {this.state.isOpenCheck && (
-            <Button
-              key='select'
-              danger
-              type='dashed'
-              size='small'
-              icon={<CloseOutlined />}
-              className='combine-btn'
-              onClick={e => this.deleteMultiple()}
-            >
-              取消
-            </Button>
+            <div className='flex-x-start flex-wrap'>
+              <Button
+                key='select'
+                danger
+                type='dashed'
+                size='small'
+                icon={<CloseOutlined />}
+                className='combine-btn'
+                onClick={e => this.deleteMultiple()}
+              >
+                删除
+              </Button>
+
+              {/* <Button key='select' type='dashed' size='small' className='combine-btn' onClick={e => this.cancelMultiple()}>
+                移动
+              </Button> */}
+              <Button
+                key='cancel'
+                danger
+                type='dashed'
+                size='small'
+                icon={<CloseOutlined />}
+                className='combine-btn'
+                onClick={e => this.cancelMultiple()}
+              >
+                取消
+              </Button>
+            </div>
           )}
         </div>
         {/* 窗口Tabs */}
@@ -817,21 +877,21 @@ class Home extends React.Component {
               onChange={this.collapseChange}
               items={Object.entries(currentWindowTab).map(([domain, domainValues]) => {
                 const overTabOne = domainValues.tabs.length > 1
+                const tabs0 = domainValues.tabs[0]
                 return {
                   key: domain,
                   collapsible: !overTabOne ? 'disabled' : 'header',
                   showArrow: overTabOne,
                   label: overTabOne ? (
                     <div className='flex-x-between flex-y-center collap-header domain-header'>
-                      <img
-                        src={domainValues.tabs[0].favIconUrl}
-                        onError={e => {
-                          e.target.onerror = null
-                          e.target.src = '/logo.png'
-                        }}
-                        alt={domainValues.tabs[0].title}
-                        className='domain-icon'
-                      />
+                      {this.state.isOpenCheck && (
+                        <Checkbox
+                          className='mr10'
+                          checked={this.getDomainCheck(domainValues.tabs)}
+                          onChange={e => this.toggleStatus(e, domainValues.tabs)}
+                        />
+                      )}
+                      <img src={tabs0.favIconUrl} alt={tabs0.title} className='domain-icon' />
                       <div className='title content-info flex flex-x-start flex-y-center'>
                         {domain}({domainValues.tabs.length})
                       </div>
@@ -844,6 +904,7 @@ class Home extends React.Component {
                       tabData={domainValues.tabs[0]}
                       favorUrls={collectUrls}
                       domain={domain}
+                      key={domain}
                       curTabData={curTabData}
                       domainValues={domainValues}
                       onTabCollect={this.onTabCollect}

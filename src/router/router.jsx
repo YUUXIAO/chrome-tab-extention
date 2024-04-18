@@ -1,6 +1,6 @@
 import { createHashRouter } from 'react-router-dom'
 import PopupHome from '@/popup/pages/Home'
-// import TodoList from '@/popup/pages/components/TodoList'
+import HistoryPage from '@/popup/pages/HistoryPage'
 import Entry from '@/popup/pages/Entry'
 // import Contnet from '@/content/index.jsx'
 import LaterPage from '@/popup/pages/LaterPage'
@@ -31,6 +31,11 @@ const routerConfigs = createHashRouter([
         path: 'todoKeys',
         name: '关键词记事本',
         element: <TodoKeysPage />,
+      },
+      {
+        path: 'history',
+        name: '历史记录',
+        element: <HistoryPage />,
       },
     ],
   },

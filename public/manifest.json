@@ -3,7 +3,7 @@
   "name": "TabsManager",
   "version": "1.1.5",
   "manifest_version": 3,
-  "permissions": ["storage", "contextMenus", "tabs", "background", "bookmarks"],
+  "permissions": ["storage", "contextMenus", "tabs", "background", "bookmarks", "history"],
   "action": {
     "default_popup": "index.html",
     "default_icon": {
