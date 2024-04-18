@@ -144,7 +144,7 @@ const operations = [
   {
     key: 'history',
     icon: <FieldTimeOutlined />,
-    label: '历史记录里选择',
+    label: '历史记录',
     visible: true,
   },
 ]

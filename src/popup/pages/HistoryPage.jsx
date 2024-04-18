@@ -6,6 +6,7 @@ import { getUpdateTime, dealTime } from '@/utils'
 import HistoryUtils from '@/extentionUtils/HistoryUtils.js'
 import tabUtils from '@/extentionUtils/tabUtils.js'
 import Store from '@/store/index'
+import BtnPopover from '../components/btnPopover'
 
 import './latePage.less'
 import './history.less'
@@ -53,8 +54,7 @@ function HistoryPage() {
     })
   }
   useEffect(() => {
-    console.error('useEffectuseEffectuseEffect')
-    getHistoryData()
+    getHistoryData('visitCount')
   }, [])
 
   // 切换搜索条件
@@ -97,6 +97,13 @@ function HistoryPage() {
   // 移动到窗口
   const combineToWindow = () => {}
 
+  useEffect(() => {
+    tabUtils.getAllWindow().then(res => {
+      setCurrentWindows(res)
+    })
+  }, [])
+  const [currentWindows, setCurrentWindows] = useState([])
+
   return (
     <div className='later-page'>
       {/* 按钮筛选区域 */}
@@ -114,30 +121,31 @@ function HistoryPage() {
         </Checkbox>
       </div>
       {/* 列表操作区域 */}
-      <div className='flex-x-between flex-y-center'>
+      <div className='list-operation flex-x-between flex-y-center'>
         <span className='flex-x-start'>
           总数：{historyData.length}/{checkList.length}
         </span>
-        <div>
+        <div className='operation'>
           {/* 窗口批量打开 */}
-          <ExportOutlined onClick={openWindow} />
+          <ExportOutlined onClick={openWindow} title='窗口批量打开' />
           {/* 移动到窗口 */}
           <ImportOutlined onClick={combineToWindow} />
+          {/* <BtnPopover title='移动到窗口' content={currentWindows} config={{ key: 'id' }}></BtnPopover> */}
           {/* 标签组 */}
           <FolderAddOutlined />
         </div>
       </div>
       {/* 列表区域 */}
       <CheckboxGroup onChange={toggleCheck} value={checkList}>
-        <div className='flex-dir-column'>
+        <div className='flex-dir-column' style={{ with: '100%' }}>
           {historyData.map(i => {
             return (
-              <div key={i.id} className='history-item flex-x-between flex-y-center'>
+              <div key={i.id} className='history-item flex-x-start flex-y-center'>
                 <div className='flex-x-start'>
                   <Checkbox value={i.id}></Checkbox>
                   <span className='title ml10'>{i.title}</span>
                 </div>
-                <span>{i.visitCount}</span>
+                <span className='visit-count flex-center'>{i.visitCount}</span>
               </div>
             )
           })}
