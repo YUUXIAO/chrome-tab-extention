@@ -40,11 +40,9 @@ const deleteTempDir = tempDir => {
 const tempContentDir = path.resolve(process.cwd(), process.env.TEMP_CONTENT_DIR)
 const tempBackgroundDir = path.resolve(process.cwd(), process.env.TEMP_BACKGROUND_DIR)
 const targetBuildDir = path.resolve(process.cwd(), process.env.TARGET_BUILD_DIR)
-
 // 复制 content-script 和 background-script 的build 文件到最终build 目录中
 copyTemp2Build(tempContentDir, targetBuildDir)
 copyTemp2Build(tempBackgroundDir, targetBuildDir)
-
 // 删除临时目录
 deleteTempDir(tempContentDir)
 deleteTempDir(tempBackgroundDir)

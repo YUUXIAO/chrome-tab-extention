@@ -50,7 +50,6 @@ class DomainOne extends React.Component {
     e.stopPropagation()
     QRCode.toDataURL(url)
       .then(data => {
-        console.log('成功过', data)
         this.setState({
           poster: data,
         })
