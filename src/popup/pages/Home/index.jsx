@@ -222,20 +222,6 @@ class Home extends React.Component {
   async componentDidMount() {
     this.getUserInfo()
     this.getAllWindows()
-    chrome.history.search(
-      {
-        text: '', // 搜索的文本，留空则返回所有历史记录
-        startTime: 0,
-        maxResults: 100,
-      },
-      function (historyItems) {
-        for (var item of historyItems) {
-          console.log('访问的URL: ' + item.url)
-          console.log('访问时间: ' + item.lastVisitTime)
-        }
-      }
-    )
-
     this.getAllBookMarks()
 
     Store.subscribe(() => {
@@ -758,7 +744,7 @@ class Home extends React.Component {
               .filter(btn => btn.visible)
               .map(btn => {
                 return (
-                  <Badge className='badge' size='small' dot={btn.count > 0} color='red'>
+                  <Badge key={btn.key} className='badge' size='small' dot={btn.count > 0} color='red'>
                     <div className='icon opt-item flex-mcenter' onClick={() => this.onOperationClick(btn)}>
                       {btn.icon}
                     </div>
