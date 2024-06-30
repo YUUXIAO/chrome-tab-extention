@@ -17,7 +17,7 @@ const throtter = (fn, wait = 3000) => {
   return function () {
     const context = this
     const args = arguments
-    console.error('3s不同模块处理', args[1])
+    // console.error('3s不同模块处理', args[1])
     const curPath = args[1]
     CHANGE_Module_TEMP.add(curPath)
     if (timer) {
@@ -89,7 +89,7 @@ chokidar
       if (Object.keys(BUILD_SCRIPTS).includes(dirPath)) {
         CHANGE_Module_TEMP.add(dirPath)
         console.log(chalk.blue(`单独打包${dirPath}模块开始---------`))
-        child_process.exec(BUILD_SCRIPTS[dirPath], (error, stdout, stderr) => {
+        child_process.exec(`npm run ${BUILD_SCRIPTS[dirPath]}`, (error, stdout, stderr) => {
           console.log(chalk.blue(`${dirPath}单独打包成功------------`))
           CHANGE_Module_TEMP.delete(dirPath)
         })

@@ -31,6 +31,7 @@ import storageUtils from '@/extentionUtils/storage'
 import CreateNewWindow from '../components/createNewWindow'
 import Store from '@/store/index'
 import { setUserInfo, saveReducer, addCollect } from '@/store/action.js'
+import * as XLSX from 'xlsx'
 
 const { Search } = Input
 // TODO 抽出一个类的实现
@@ -329,6 +330,33 @@ class Home extends React.Component {
       const ids = Array.from(selectIds)
       await TabUtils.deleteTab(ids)
       this.getAllWindows()
+    }
+    this.cancelMultiple()
+  }
+
+  exportExcel = ids => {
+    const { windowTabs, activeTab } = this.state
+
+    const curTabs = windowTabs.find(i => i.windowId === activeTab)
+    const tabDatas = curTabs.tabs.filter(i => ids.includes(i.id))
+
+    const filterDatas = tabDatas.map(i => {
+      return JSON.parse(JSON.stringify(i, ['title', 'favIconUrl', 'url']))
+    })
+    const data = XLSX.utils.json_to_sheet(filterDatas)
+    // 创建工作簿
+    const wb = XLSX.utils.book_new()
+    // 将工作表放入工作簿中
+    XLSX.utils.book_append_sheet(wb, data, 'data')
+    // 生成文件并下载
+    XLSX.writeFile(wb, `${new Date().getTime()}.xlsx`)
+  }
+  // 导出文件
+  exportMultiple = async () => {
+    const { selectIds } = this.state
+    if (selectIds.size) {
+      const ids = Array.from(selectIds)
+      await this.exportExcel(ids)
     }
     this.cancelMultiple()
   }
@@ -803,11 +831,14 @@ class Home extends React.Component {
                 danger
                 type='dashed'
                 size='small'
-                icon={<CloseOutlined />}
+                icon={<FieldTimeOutlined />}
                 className='combine-btn'
                 onClick={e => this.cancelMultiple()}
               >
                 取消
+              </Button>
+              <Button key='export' type='dashed' size='small' icon={<CloseOutlined />} className='combine-btn' onClick={e => this.exportMultiple()}>
+                导出到文件
               </Button>
             </div>
           )}

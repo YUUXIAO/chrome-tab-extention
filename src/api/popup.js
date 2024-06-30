@@ -256,6 +256,7 @@ export const mockTabsData = [
     width: 2048,
     windowId: 973095271,
   },
+
   {
     active: false,
     audible: false,

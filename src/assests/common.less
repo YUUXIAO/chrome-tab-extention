@@ -147,3 +147,87 @@ body {
 .mr10 {
   margin-right: 10px;
 }
+
+// 通用按钮样式
+.c-btn {
+  background: #333;
+  opacity: 0.7;
+  color: #fff;
+  font-size: 12px;
+  padding: 5px 10px;
+  border: 1px solid @color-bg;
+  border-radius: 4px;
+  margin: 12px 6px;
+  cursor: pointer;
+  .c-btn-icon {
+    color: #fff;
+  }
+}
+
+.c-btn-transparent {
+  &:extend(.c-btn);
+  background: @color-bg;
+  color: @color-text;
+  border-color: @color-border;
+  padding: 2px 8px;
+  border-radius: 9999rem;
+  &.active {
+    background: @color-border;
+    border-color: @color-bg;
+    color: @color-bg;
+  }
+}
+
+// 通用图标
+.c-icon {
+  color: @color-border;
+  font-size: 18px;
+}
+
+// 通用标题
+.c-h3 {
+  font-size: 14px;
+  font-weight: 500;
+  color: @color-text;
+}
+
+// 通用搜索框
+.c-search-input {
+  &:extend(.c-btn);
+  height: 36px;
+  padding: 0 18px;
+  background: @color-bg;
+  border-radius: 18px;
+  border-color: @color-border;
+  color: @color-border;
+  font-size: 14px;
+  .mixin-placeholder(@color-border, 14px);
+}
+
+// 设置placeholder的样式
+.mixin-placeholder (@textColor:@color-text,@textSize:12px) {
+  ::-webkit-input-placeholder {
+    color: @textColor;
+    font-size: @textSize;
+  }
+
+  :-moz-placeholder {
+    color: @textColor;
+    font-size: @textSize;
+  }
+
+  ::-moz-placeholder {
+    color: @textColor;
+    font-size: @textSize;
+  }
+
+  :-ms-input-placeholder {
+    color: @textColor;
+    font-size: @textSize;
+  }
+
+  ::placeholder {
+    color: @textColor;
+    font-size: @textSize;
+  }
+}
