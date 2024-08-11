@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react'
-import { ExportOutlined, FolderAddOutlined, ImportOutlined, SearchOutlined } from '@ant-design/icons'
-import { Select, Checkbox, Input } from 'antd'
+import React, { useRef, useEffect, useState } from 'react'
+import { ExportOutlined, FolderAddOutlined, ImportOutlined, SearchOutlined, PauseOutlined, ScheduleOutlined } from '@ant-design/icons'
+import type { DatePickerProps } from 'antd'
+import { Affix, Checkbox, DatePicker, Input } from 'antd'
 import type { SearchProps } from 'antd/es/input/Search'
 import { getTodoKeys, deleteTodoKeys, updateTodoKeys } from '@/api/user'
 import { getUpdateTime, dealTime } from '@/utils'
@@ -9,9 +10,16 @@ import tabUtils from '@/extentionUtils/tabUtils.js'
 import Store from '@/store/index'
 import BtnPopover from '../components/btnPopover'
 
+import dayjs from 'dayjs'
+
+import duration from 'dayjs/plugin/duration'
+import arraySupport from 'dayjs/plugin/arraySupport'
+
 import './latePage.less'
 import './history.less'
 
+dayjs.extend(duration)
+dayjs.extend(arraySupport)
 const CheckboxGroup = Checkbox.Group
 const { Search } = Input
 
@@ -34,7 +42,9 @@ const quickySort = [
   {
     name: '时间排序：',
     key: 'timeSort',
+    type: 'category',
     list: [
+      { key: 'today', name: '今天' },
       { key: 'week', name: '本周' },
       { key: 'month', name: '本月' },
       { key: 'year', name: '今年' },
@@ -47,15 +57,18 @@ const quickySort = [
   {
     name: '访问次数：',
     key: 'countSort',
+    type: 'category',
     list: [
       { key: 'mostVisit', name: '最多访问' },
       { key: 'lastVisit', name: '最近访问' },
       { key: 'last100', name: '最近100条' },
+      { key: 'last10', name: '最近10条' },
     ],
   },
   {
     name: '历史搜索：',
     key: 'historySort',
+    type: 'category',
     list: [],
   },
 ]
@@ -65,19 +78,32 @@ function combineToWindow(props) {
 }
 
 function HistoryPage() {
+  const dateScrollRef = useRef(null)
   const [historyData, setHistory] = useState([])
   const [checkList, setCheckList] = useState([])
+  const [isAscNow, setSortCount] = useState(true)
   const [keyword, setKeywordVal] = useState('') // 搜索关键词
-  const filterMaps = new Map()
-  const [filters, setFilters] = useState([]) // 当前选中的条件
+  const [filterMaps] = useState(
+    new Map([
+      ['timeSort', 'today'],
+      ['countSort', 'last10'],
+    ])
+  )
+  const [filters, setFilters] = useState(['last10', 'today']) // 当前选中的条件
+  const [daysInMonth, setDaysInMonth] = useState([]) // 当月总共有几天
   const [quickySortList, setQuickSort] = useState(quickySort)
   const [pageParams, setPageParams] = useState({
     pageNo: 1,
-    pageSize: 100,
+    pageSize: 1000,
   })
   const getHistoryData = (params: string | object) => {
     // TODO 设置时间选项
-    const baseQuery = { maxResults: pageParams.pageSize, startTime: new Date().getTime() - 24 * 3600 * 1000, endTime: new Date().getTime(), text: '' }
+    const baseQuery = {
+      maxResults: pageParams.pageSize,
+      startTime: new Date().getTime() - 24 * 3600 * 1000,
+      endTime: new Date().getTime(),
+      text: '',
+    }
     if (typeof params === 'string') {
       HistoryUtils.getHistory(baseQuery).then(res => {
         console.error('获取历史记录', res)
@@ -90,7 +116,7 @@ function HistoryPage() {
         // setHistory(res)
       })
     } else {
-      // 按照关键词搜索
+      // 按照关键词搜索/自定义搜索
       const combineQuery = Object.assign({}, baseQuery, params)
       HistoryUtils.getHistory(combineQuery).then(res => {
         console.error('获取历史记录', res)
@@ -151,40 +177,98 @@ function HistoryPage() {
     ['lastYear', 365],
     ['10Days', 10],
   ])
-  const quickyItemClick = (key, data) => {
-    console.error('quickyItemClick----', key, data)
-    const baseQuery = { maxResults: pageParams.pageSize, startTime: new Date().getTime() - 24 * 3600 * 1000, endTime: new Date().getTime(), text: '' }
+  const quicklyItemClick = (category, data) => {
+    console.error('quicklyItemClick----', category, data)
+    const baseQuery = {
+      maxResults: pageParams.pageSize,
+      startTime: new Date().getTime() - 24 * 3600 * 1000,
+      endTime: new Date().getTime(),
+      text: '',
+    }
     let combineQuery = {}
-    // 计算当前所有选中项
-    console.error(filterMaps)
-    if (filterMaps.has(data.key)) {
-      filterMaps.delete(data.key)
-    } else {
-      filterMaps.set(data.key, data)
-    }
-    setFilters(Array.from(filterMaps.keys())) // 更新选中项
+    // 计算当前所有选中项,一种类别只能勾选一种类型
+    console.error('filterMaps', filterMaps)
+    // if (filterMaps.has(category)) {
+    //   filterMaps.delete(category);
+    // } else {
+    //   filterMaps.set(category, data);
+    // }
+    filterMaps.set(category, data.key)
 
-    console.error('filters', filters)
-    // 记录多选的列表
-    if (filters.includes(data.key)) {
-      filters.splice(filters.indexOf(data.key), 1)
-    } else {
-      filters.push(data.key)
-    }
+    setFilters(Array.from(filterMaps.values())) // 更新选中项
     // 合并所有筛选条件，查询记录
-    switch (key) {
+    switch (category) {
       case 'timeSort':
-        combineQuery.startTime = new Date().getTime() - 24 * 3600 * 1000 * timeSortMaps.get(data.key)
-        break
+        if (data.key === '3Months') {
+          const threeMonthsAgo = dayjs().clone().subtract(3, 'month').valueOf() // 3个月前时间戳-毫秒
+          combineQuery.startTime = threeMonthsAgo
+        } else if (data.key === 'lastMonth') {
+          const threeMonthsAgo = dayjs().clone().subtract(1, 'month').valueOf() // 1个月前时间戳-毫秒
+          combineQuery.startTime = threeMonthsAgo
+        } else if (data.key === '10Days') {
+          const threeMonthsAgo = dayjs().clone().subtract(10, 'day').valueOf() // 10天前时间戳-毫秒
+          combineQuery.startTime = threeMonthsAgo
+        } else if (data.key === 'lastWeek') {
+          const threeMonthsAgo = dayjs().clone().subtract(7, 'day').valueOf() // 10天前时间戳-毫秒
+          combineQuery.startTime = threeMonthsAgo
+        } else if (data.key === 'year') {
+          const currentYear = dayjs().year()
+          const val = dayjs([currentYear, 0, 1]).valueOf()
+          combineQuery.startTime = val
+        } else if (data.key === 'month') {
+          const val = dayjs().startOf('month').valueOf()
+          combineQuery.startTime = val
+        } else if (data.key === 'week') {
+          const val = dayjs().startOf('week').valueOf()
+          combineQuery.startTime = val
+        } else if (data.key === 'today') {
+          const val = dayjs().startOf('day').valueOf()
+          combineQuery.startTime = val
+        }
+
       case 'historySort': // 历史搜索
         break
       case 'countSort': // 访问次数
-        if (data.key === 'mostVisit'); // 最多访问
+        if (data.key === 'mostVisit') {
+          // 最多访问
+        }
         if (data.key === 'last10') combineQuery.maxResults = 10
         if (data.key === 'last100') combineQuery.maxResults = 100
         break
     }
     combineQuery = Object.assign({}, baseQuery, combineQuery)
+    console.error('合并后的参数------》', combineQuery)
+    getHistoryData(combineQuery)
+  }
+  // 按访问量排序
+  const sortByCount = () => {
+    console.error('按访问量排序')
+    if (historyData.length <= 1) return
+    let result = []
+    if (isAscNow) {
+      // 升序改降序
+      result = historyData.sort(function (a, b) {
+        return a.visitCount - b.visitCount
+      })
+    } else {
+      // 降序改升序
+      result = historyData.sort(function (a, b) {
+        return b.visitCount - a.visitCount
+      })
+    }
+    setSortCount(!isAscNow)
+    console.error('按访问量排序2', result)
+    setHistory(result)
+  }
+
+  // 删除历史记录
+  const deleteUrls = () => {
+    console.error('删除历史记录', historyData)
+    const urls = historyData.filter(i => checkList.includes(i.id)).map(i => i.url)
+    const params = {
+      details: urls,
+    }
+    HistoryUtils.deleteHistory(params)
   }
 
   // 新窗口打开
@@ -202,9 +286,77 @@ function HistoryPage() {
     tabUtils.getAllWindow().then(res => {
       setCurrentWindows(res)
     })
+    getCurMonthDays()
   }, [])
   const [currentWindows, setCurrentWindows] = useState([])
 
+  // 把今天的日期滚动到可视区
+  const targetItem = useRef(null)
+  useEffect(() => {
+    // console.error("把今天的日期滚动到可视区", targetItem.current);
+    // targetItem.current &&
+    //   targetItem.current.scrollIntoView({ behavior: "smooth" });
+    const itemElement = document.getElementById(`targetItem`)
+    console.error('把今天的日期滚动到可视区', itemElement)
+    if (itemElement) {
+      itemElement.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+        inline: 'nearest',
+      })
+    }
+  }, [])
+
+  // 获取当月天数
+  const getCurMonthDays = () => {
+    const curDay = new Date().toISOString().split('T')[0] // 2024-07-04
+    const curMonth = new Date().getMonth() + 1
+    const weekDay = new Date().getDay() // 星期几
+    const today = new Date().getDate() // 今天几号
+    const year = new Date().getFullYear()
+    const allDays = dayjs(curDay).daysInMonth()
+
+    const getWeekDay = (day: string) => {
+      return dayjs(`${year}-${curMonth}-${day}`).day()
+    }
+
+    const dateList = Array(allDays)
+      .fill(' ')
+      .map((_, day) => {
+        return {
+          day: day + 1,
+          month: curMonth,
+          weekDay: `星期${getWeekDay(String(day)) + 1}`,
+          isToday: today,
+          fullDay: `${year}-${curMonth}-${day}`,
+        }
+      })
+    setDaysInMonth(dateList)
+  }
+
+  // 切换日期
+  const toggleDay = data => {
+    console.error('切换日期', data, data.fullDay)
+    const endTime = dayjs(data.fullDay).endOf('day').toDate().getTime()
+    const startTime = dayjs(data.fullDay).startOf('day').toDate().getTime()
+    console.error('endTime', endTime)
+    const query = {
+      startTime,
+      endTime,
+      text: '',
+      maxResults: 10,
+    }
+    HistoryUtils.getHistory(query).then(res => {
+      console.error('获取历史记录', res)
+      setHistory(res)
+    })
+  }
+
+  // 选择日期
+  const onDateChange: DatePickerProps['onChange'] = (date, dateString) => {
+    console.error(date, dateString)
+    toggleDay({ fullDay: dateString })
+  }
   return (
     <div className='later-page'>
       {/* 按钮筛选区域 */}
@@ -217,6 +369,31 @@ function HistoryPage() {
           )
         })}
       </div> */}
+      {/* 日期滚动行 */}
+      <div className='date-scroll flex-x-start flex-y-start'>
+        <div className='scroll-area flex' ref={dateScrollRef}>
+          {daysInMonth.map(i => {
+            const isToday = i.day === i.isToday
+            return (
+              <div
+                key={i.day}
+                id={isToday ? 'targetItem' : ''}
+                className={'date-item flex-mcenter' + (isToday ? ' active' : '')}
+                onClick={() => toggleDay(i)}
+              >
+                <div className='week flex-center'>{i.weekDay}</div>
+                <div className='day flex-center'>{i.day}</div>
+                <div className='month flex-center'>{`${i.month}月`}</div>
+              </div>
+            )
+          })}
+        </div>
+        <div className='calendar relative flex-mcenter'>
+          <ScheduleOutlined style={{ fontSize: '48px', color: '#999' }} />
+          <DatePicker className='component' onChange={onDateChange} />
+        </div>
+      </div>
+
       {/* 搜索关键词 */}
       <Input
         className='c-search-input'
@@ -229,16 +406,15 @@ function HistoryPage() {
       {/* 快捷搜索 */}
       {quickySortList.map(q => {
         return (
-          <div className='quicky-row flex-x-start flex-y-center'>
+          <div className='quicky-row flex-x-start flex-y-center' key={q.name}>
             <span className='c-h3'>{q.name}</span>
             <div className='quicky-content'>
-              {filters}
               {q.list.map(l => {
                 return (
                   <span
                     className={['c-btn-transparent', filters.includes(l.key) ? 'active' : null].join(' ')}
                     key={l.key}
-                    onClick={() => quickyItemClick(q.key, l)}
+                    onClick={() => quicklyItemClick(q.key, l)}
                   >
                     {l.name}
                   </span>
@@ -259,27 +435,41 @@ function HistoryPage() {
             总数：{historyData.length}/{checkList.length}
           </span>
         </div>
-        <div className='operation'>
+        <div className='controls'>
+          <span className='flex-x-start' onClick={sortByCount}>
+            访问量
+            <PauseOutlined className='c-icon' />
+          </span>
+          <span className='flex-x-start' onClick={deleteUrls}>
+            删除
+          </span>
           {/* 窗口批量打开 */}
-          <ExportOutlined onClick={openWindow} title='窗口批量打开' />
+          <ExportOutlined className='c-icon' onClick={openWindow} title='窗口批量打开' />
           {/* 移动到窗口 */}
-          <ImportOutlined onClick={combineToWindow} />
+          {/* <ImportOutlined className="c-icon" onClick={combineToWindow} /> */}
           {/* <BtnPopover title='移动到窗口' content={currentWindows} config={{ key: 'id' }}></BtnPopover> */}
           {/* 标签组 */}
-          <FolderAddOutlined />
+          {/* <FolderAddOutlined /> */}
         </div>
       </div>
       {/* 列表区域 */}
-      <CheckboxGroup onChange={toggleCheck} value={checkList}>
-        <div className='flex-dir-column' style={{ with: '100%' }}>
+      <CheckboxGroup onChange={toggleCheck} value={checkList} style={{ width: '100%' }}>
+        <div className='flex-dir-column' style={{ width: '100%' }}>
           {historyData.map(i => {
+            const lastVisitTime = dayjs(i.lastVisitTime).format('YYYY-MM-DD HH:mm') // 最近访问时间
             return (
-              <div key={i.id} className='history-item flex-x-start flex-y-center'>
-                <div className='flex-x-start'>
+              <div key={i.id} className='history-item'>
+                <div className='flex-x-start flex-y-center'>
                   <Checkbox value={i.id}></Checkbox>
-                  <span className='title ml10'>{i.title}</span>
+                  <div className='info flex'>
+                    <div className='flex-x-start flex-y-center'>
+                      <span className='title'>{i.title}</span>
+                      <span className='visit-count flex-center'>{i.visitCount}</span>
+                    </div>
+                    <div className='url app-oneline'>{i.url}</div>
+                    <div className='lastVisit'>最近访问：{lastVisitTime}</div>
+                  </div>
                 </div>
-                <span className='visit-count flex-center'>{i.visitCount}</span>
               </div>
             )
           })}
