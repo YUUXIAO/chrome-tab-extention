@@ -1,5 +1,5 @@
 import './index.less'
-import { Tabs, Input, Collapse, Popconfirm, Image, Checkbox, Badge, Button } from 'antd'
+import { Tabs, Input, Collapse, Popconfirm, Dropdown, Image, Checkbox, Badge, Button } from 'antd'
 import { useNavigate } from 'react-router-dom'
 import React from 'react'
 import QRCode from 'qrcode'
@@ -7,12 +7,14 @@ import QRCode from 'qrcode'
 import {
   FundViewOutlined,
   DeleteOutlined,
+  MenuOutlined,
   HeartFilled,
   HeartOutlined,
   FieldTimeOutlined,
   FolderOpenOutlined,
   UserAddOutlined,
   UserSwitchOutlined,
+  SearchOutlined,
   EditOutlined,
   CopyOutlined,
   CloseOutlined,
@@ -147,6 +149,12 @@ const operations = [
     label: '历史记录',
     visible: true,
   },
+  {
+    key: 'login',
+    icon: <FieldTimeOutlined />,
+    label: '登录',
+    visible: true,
+  },
 ]
 
 class Home extends React.Component {
@@ -156,7 +164,7 @@ class Home extends React.Component {
       curTabData: {},
       isOpenCheck: false, // 是否多选
       selectIds: new Set(),
-      // extentionDir: null,
+      // extentionDir: null,c-icon
       userinfo: {},
       bookMarkItem: {}, // 当前操作的书签数据
       bookMarkPopShow: false, // 选择书签
@@ -169,6 +177,27 @@ class Home extends React.Component {
       isShowLater: false,
       isLogin: Store.getState().user.isLogin,
       collectUrls: Store.getState().user.collectUrls, //收藏信息
+      menuItems: [
+        {
+          key: '1',
+          label: 'a danger item',
+        },
+        {
+          key: '2',
+          label: 'a danger item',
+          disabled: true,
+        },
+        {
+          key: '3',
+          label: 'a danger item',
+          disabled: true,
+        },
+        {
+          key: '4',
+          danger: true,
+          label: 'a danger item',
+        },
+      ],
     }
   }
 
@@ -207,10 +236,13 @@ class Home extends React.Component {
     return result
   }
   get searchBarOpetion() {
-    const keys = ['todo', 'later', 'create-tag']
+    const keys = ['todo', 'later', 'create-tag', 'login']
     const result = this.operationBtns.filter(i => {
       if (keys.includes(i.key)) {
-        return i
+        return {
+          key: i.key,
+          label: i.key,
+        }
       }
     })
     return result
@@ -334,6 +366,7 @@ class Home extends React.Component {
     this.cancelMultiple()
   }
 
+  // 导出文件
   exportExcel = ids => {
     const { windowTabs, activeTab } = this.state
 
@@ -344,12 +377,10 @@ class Home extends React.Component {
       return JSON.parse(JSON.stringify(i, ['title', 'favIconUrl', 'url']))
     })
     const data = XLSX.utils.json_to_sheet(filterDatas)
-    // 创建工作簿
-    const wb = XLSX.utils.book_new()
-    // 将工作表放入工作簿中
-    XLSX.utils.book_append_sheet(wb, data, 'data')
-    // 生成文件并下载
-    XLSX.writeFile(wb, `${new Date().getTime()}.xlsx`)
+
+    const wb = XLSX.utils.book_new() // 创建工作簿
+    XLSX.utils.book_append_sheet(wb, data, 'data') // 将工作表放入工作簿中
+    XLSX.writeFile(wb, `${new Date().getTime()}.xlsx`) // 生成文件并下载
   }
   // 导出文件
   exportMultiple = async () => {
@@ -534,7 +565,9 @@ class Home extends React.Component {
   }
 
   // 搜索当前窗口
-  onSearch = word => {
+  onSearch = e => {
+    const word = e.target.value
+    console.error('搜索', word)
     let result = []
     let keyword = word.trim()
     const { windowTabs, activeTab } = this.state
@@ -591,9 +624,19 @@ class Home extends React.Component {
         break
       case 'login':
         const loginWindowId = await storageUtils.getStorageItem('loginWindowId')
-        TabUtils.toggleWindow(Number(loginWindowId) || 1, { focus: true, drawAttention: true }).catch(() => {
+        TabUtils.toggleWindow(Number(loginWindowId) || 1, {
+          focus: true,
+          drawAttention: true,
+        }).catch(() => {
           const left = window.screen.width - 40 - 300
-          const properties = { url: 'pages/login.html', left, top: 100, width: 300, height: 400, type: 'popup' }
+          const properties = {
+            url: 'pages/login.html',
+            left,
+            top: 100,
+            width: 300,
+            height: 400,
+            type: 'popup',
+          }
           TabUtils.createNewWindow(properties, async window => {
             storageUtils.setStorageItem('loginWindowId', window.id)
           })
@@ -755,6 +798,10 @@ class Home extends React.Component {
     await storageUtils.removeStorageItem('token')
     Store.dispatch(setUserInfo({ collectUrls: [] }))
   }
+
+  onClickMenu = data => {
+    console.error(data)
+  }
   render() {
     const { windowTabs, bookMarkPopShow, bookMarkItem, curTabData, activeTab, expandkeys, collectUrls, isLogin, currentWindowTab } = this.state
     const userInfo = this.state.userinfo?.userinfo || {}
@@ -765,20 +812,39 @@ class Home extends React.Component {
         </div> */}
         {/* 搜索当前窗口 */}
         <div className='search-wrapper flex-x-between flex-y-center'>
-          <Search placeholder='Quick search' allowClear className='search-bar' onSearch={this.onSearch} />
-          {/* TODO 开放所有tab搜索 */}
+          {/* 搜索关键词 */}
+          <Input
+            className='c-search-input'
+            prefix={<SearchOutlined className='c-icon' />}
+            placeholder='搜索'
+            // onChange={onKeywordChange}
+            onPressEnter={this.onSearch}
+          />
+          {/* <Search placeholder='Quick search' allowClear className='search-bar' onSearch={this.onSearch} /> */}
+          <Dropdown menu={{ items: this.searchBarOpetion }} onSelect={this.onClickMenu}>
+            <MenuOutlined className='c-icon' />
+          </Dropdown>
           <div className='search-opt flex-x-end flex-y-center'>
-            {this.searchBarOpetion
-              .filter(btn => btn.visible)
-              .map(btn => {
+            {/* {this.searchBarOpetion
+              .filter((btn) => btn.visible)
+              .map((btn) => {
                 return (
-                  <Badge key={btn.key} className='badge' size='small' dot={btn.count > 0} color='red'>
-                    <div className='icon opt-item flex-mcenter' onClick={() => this.onOperationClick(btn)}>
+                  <Badge
+                    key={btn.key}
+                    className="badge"
+                    size="small"
+                    dot={btn.count > 0}
+                    color="red"
+                  >
+                    <div
+                      className="c-btn-transparent-square"
+                      onClick={() => this.onOperationClick(btn)}
+                    >
                       {btn.icon}
                     </div>
                   </Badge>
-                )
-              })}
+                );
+              })} */}
             {/* 登入/登出 */}
             <div className='user flex-mcenter opt-item'>
               {isLogin ? (
@@ -786,7 +852,7 @@ class Home extends React.Component {
                   <UserSwitchOutlined className='icon' size='large' />
                 </Popconfirm>
               ) : (
-                <UserAddOutlined className='icon' size='large' onClick={() => this.onOperationClick({ key: 'login' })} />
+                <UserAddOutlined className='c-icon' size='large' onClick={() => this.onOperationClick({ key: 'login' })} />
               )}
             </div>
           </div>
@@ -797,7 +863,7 @@ class Home extends React.Component {
         <div className='outer-wrapper'>
           {this.TabsOperation.filter(btn => btn.visible).map(btn => {
             return (
-              <Button key={btn.key} size='small' icon={btn.icon} className='combine-btn' onClick={() => this.onOperationClick(btn)}>
+              <Button key={btn.key} size='small' icon={btn.icon} className='c-btn-transparent-square' onClick={() => this.onOperationClick(btn)}>
                 <Badge size='small' dot={btn.count > 0} color='red'>
                   {btn.label}
                 </Badge>
@@ -843,8 +909,17 @@ class Home extends React.Component {
             </div>
           )}
         </div>
-        {/* 窗口Tabs */}
 
+        {/* 搜索关键词 */}
+        {/* <Search
+          placeholder="Quick search"
+          prefix={<SearchOutlined className="c-icon" />}
+          allowClear
+          className="c-search-input"
+          onSearch={this.onSearch}
+        /> */}
+
+        {/* 窗口Tabs */}
         <Tabs
           onEdit={this.onEdit}
           type='editable-card'

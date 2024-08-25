@@ -129,22 +129,22 @@ function HistoryPage() {
   }, [])
 
   // 切换搜索条件
-  const toggleSearchParams = btn => {
-    const { key } = btn
-    const resetParams = {
-      pageNo: 1,
-      pageSize: 10,
-    }
-    setPageParams({ ...pageParams, ...resetParams })
-    switch (key) {
-      case 'visitCount':
-        getHistoryData(key)
-        break
+  // const toggleSearchParams = btn => {
+  //   const { key } = btn
+  //   const resetParams = {
+  //     pageNo: 1,
+  //     pageSize: 10,
+  //   }
+  //   setPageParams({ ...pageParams, ...resetParams })
+  //   switch (key) {
+  //     case 'visitCount':
+  //       getHistoryData(key)
+  //       break
 
-      default:
-        break
-    }
-  }
+  //     default:
+  //       break
+  //   }
+  // }
 
   // 选择操作
   const checkAll = checkList.length === historyData.length // 全选状态
@@ -307,6 +307,12 @@ function HistoryPage() {
     }
   }, [])
 
+  const getFavorIcon = url => {
+    const urlObj = new URL(url)
+
+    return `${urlObj.origin}/favicon.ico`
+  }
+
   // 获取当月天数
   const getCurMonthDays = () => {
     const curDay = new Date().toISOString().split('T')[0] // 2024-07-04
@@ -461,13 +467,16 @@ function HistoryPage() {
               <div key={i.id} className='history-item'>
                 <div className='flex-x-start flex-y-center'>
                   <Checkbox value={i.id}></Checkbox>
-                  <div className='info flex'>
-                    <div className='flex-x-start flex-y-center'>
-                      <span className='title'>{i.title}</span>
-                      <span className='visit-count flex-center'>{i.visitCount}</span>
+                  <div className='info flex flex-x-start flex-y-center'>
+                    <img className='c-logo' src={getFavorIcon(i.url)} alt='' />
+                    <div>
+                      <div className='flex-x-start flex-y-center'>
+                        <span className='title'>{i.title}</span>
+                        <span className='visit-count flex-center'>{i.visitCount}</span>
+                      </div>
+                      <div className='url app-oneline'>{i.url}</div>
+                      <div className='lastVisit'>最近访问：{lastVisitTime}</div>
                     </div>
-                    <div className='url app-oneline'>{i.url}</div>
-                    <div className='lastVisit'>最近访问：{lastVisitTime}</div>
                   </div>
                 </div>
               </div>

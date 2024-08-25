@@ -40,6 +40,7 @@ export default defineConfig({
         // 配置所有页面路径，使得所有页面都会被打包
         index: path.resolve(__dirname, 'index.html'),
         login: path.resolve(__dirname, '/pages/login.html'),
+        newtab: path.resolve(__dirname, '/pages/newtab.html'),
       },
       output: {
         assetFileNames: 'assets/[name]-[hash].[ext]',

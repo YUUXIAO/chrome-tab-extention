@@ -18,6 +18,10 @@
     "service_worker": "background.js",
     "type": "module"
   },
+  "chrome_url_overrides": {
+    "newtab": "pages/newtab.html"
+  },
+
   "icons": {
     "16": "logo.png",
     "32": "logo.png",
